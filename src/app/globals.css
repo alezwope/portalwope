@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/* Marca UniBars: metal fundido y lava cósmica. Oscuro por defecto. */
+:root {
+  --bg: #0d0b0a;
+  --card: #1c1815;
+  --borde: #33291f;
+  --lava: #e8540c;
+  --lava-claro: #ff5a1f;
+  --dorado: #d4a017;
+  --texto: #f0e6d8;
+  --suave: #b9a994;
+  color-scheme: dark;
+}
+
+[data-tema="claro"] {
+  --bg: #f5efe4;
+  --card: #e8dcc8;
+  --borde: #cdbb9f;
+  --lava: #d14a0a;
+  --lava-claro: #e8540c;
+  --dorado: #b8860b;
+  --texto: #1c1815;
+  --suave: #5e5143;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-borde: var(--borde);
+  --color-lava: var(--lava);
+  --color-lava-claro: var(--lava-claro);
+  --color-dorado: var(--dorado);
+  --color-texto: var(--texto);
+  --color-suave: var(--suave);
+  --font-titulo: Rockwell, "Roboto Slab", "Arvo", "Rockwell Extra Bold", Georgia, serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  scrollbar-color: var(--lava) var(--bg);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--lava);
+  border-radius: 6px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--texto);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.titulo {
+  font-family: var(--font-titulo);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+::selection {
+  background: var(--lava);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--dorado);
+  outline-offset: 2px;
+}
+
+.tarjeta {
+  background: var(--card);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.campo {
+  width: 100%;
+  background: var(--bg);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  font-size: 1rem;
+}
+.campo:focus {
+  border-color: var(--lava);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lava) 30%, transparent);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 10px;
+  padding: 0.7rem 1.1rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.08s ease, filter 0.15s ease;
+  text-align: center;
+}
+.btn:hover {
+  filter: brightness(1.08);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-lava {
+  background: linear-gradient(180deg, var(--lava-claro), var(--lava));
+  color: #fff;
+}
+.btn-borde {
+  background: transparent;
+  color: var(--texto);
+  border-color: var(--borde);
+}
+.btn-dorado {
+  background: var(--dorado);
+  color: #1c1815;
+}
+
+.aviso-error {
+  background: color-mix(in srgb, var(--lava) 14%, transparent);
+  border: 1px solid var(--lava);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.92rem;
+}
+.aviso-ok {
+  background: color-mix(in srgb, var(--dorado) 16%, transparent);
+  border: 1px solid var(--dorado);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.92rem;
+}
