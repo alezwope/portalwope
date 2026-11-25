@@ -16,6 +16,7 @@ export type Perfil = {
   es_admin: boolean;
   onboarding_completo: boolean;
   modo_invisible: boolean;
+  compartir_logros: "amigos" | "zona" | "nadie";
 };
 
 export type Pagina = {

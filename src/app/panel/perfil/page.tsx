@@ -5,6 +5,7 @@ import FormularioPerfil from "@/components/FormularioPerfil";
 import FormularioEntrenamiento from "@/components/FormularioEntrenamiento";
 import CrearPagina from "@/components/CrearPagina";
 import BotonSalir from "@/components/BotonSalir";
+import PrivacidadSocial from "@/components/PrivacidadSocial";
 import { ESTADOS_PAGINA, TIPOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
 
 export const metadata: Metadata = { title: "Perfil" };
@@ -12,10 +13,11 @@ export const metadata: Metadata = { title: "Perfil" };
 export default async function PaginaPerfil() {
   const { supabase, perfil } = await requerirPerfil();
   const paginas = await misPaginas();
-  const [{ data: medidas }, { data: salud }, { data: marcas }] = await Promise.all([
+  const [{ data: medidas }, { data: salud }, { data: marcas }, { data: bloqueados }] = await Promise.all([
     supabase.from("perfil_medidas").select("peso_kg, estatura_cm").eq("usuario_id", perfil.id).maybeSingle(),
     supabase.from("perfil_salud").select("lesiones, notas").eq("usuario_id", perfil.id).maybeSingle(),
     supabase.from("marcas").select("id, ejercicio, valor, unidad, fecha").eq("usuario_id", perfil.id).order("fecha", { ascending: false }).limit(50),
+    supabase.rpc("mis_bloqueos"),
   ]);
   const faltan = (Object.keys(TIPOS_PAGINA) as TipoPagina[]).filter((t) => !paginas.some((p) => p.tipo === t));
 
@@ -29,6 +31,11 @@ export default async function PaginaPerfil() {
       <section id="entrenamiento" className="grid gap-3 scroll-mt-20">
         <h2 className="text-2xl">Perfil de entrenamiento</h2>
         <FormularioEntrenamiento usuarioId={perfil.id} medidas={medidas} salud={salud} marcas={marcas ?? []} />
+      </section>
+
+      <section id="privacidad" className="grid gap-3 scroll-mt-20">
+        <h2 className="text-2xl">Privacidad y comunidad</h2>
+        <PrivacidadSocial usuarioId={perfil.id} actual={perfil.compartir_logros ?? "amigos"} bloqueados={(bloqueados ?? []) as { id: string; alias: string }[]} />
       </section>
 
       <section id="paginas" className="grid gap-3 scroll-mt-20">

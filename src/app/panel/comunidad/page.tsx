@@ -3,6 +3,8 @@ import Link from "next/link";
 import { requerirPerfil } from "@/lib/sesion";
 import { MODALIDADES, NIVELES, nivelDe, type Nivel } from "@/lib/catalogos";
 import ControlVinculo from "@/components/ControlVinculo";
+import Amigos from "@/components/Amigos";
+import type { MisAmigos } from "@/lib/social";
 
 export const metadata: Metadata = { title: "Comunidad" };
 
@@ -25,6 +27,8 @@ export default async function Comunidad(props: PageProps<"/panel/comunidad">) {
     .eq("persona_id", perfil.id)
     .in("estado", ["solicitud", "aceptado"])
     .order("creado_en", { ascending: false });
+
+  const { data: amigos } = await supabase.rpc("mis_amigos");
 
   let consulta = supabase
     .from("paginas")
@@ -60,6 +64,8 @@ export default async function Comunidad(props: PageProps<"/panel/comunidad">) {
           </ul>
         </section>
       )}
+
+      <Amigos inicial={(amigos ?? { amigos: [], recibidas: [], enviadas: [] }) as MisAmigos} />
 
       <section className="grid gap-3">
         <h2 className="text-2xl">Encuentra entrenador</h2>
@@ -105,7 +111,7 @@ export default async function Comunidad(props: PageProps<"/panel/comunidad">) {
 
       <section className="tarjeta">
         <h2 className="text-xl mb-1">Muy pronto</h2>
-        <p className="text-suave">Amigos, clanes y familia, compañeros de barra, eventos en tu parque y la búsqueda rápida de entrenador.</p>
+        <p className="text-suave">Clanes y familia, eventos en tu parque y la búsqueda rápida de entrenador y compañeros por zona.</p>
       </section>
     </div>
   );

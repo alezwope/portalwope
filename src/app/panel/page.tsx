@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { misPaginas, requerirPerfil } from "@/lib/sesion";
 import { OBJETIVOS, nivelDe, type Objetivo } from "@/lib/catalogos";
+import Feed from "@/components/Feed";
+import type { ItemFeed } from "@/lib/social";
 
 export const metadata: Metadata = { title: "Inicio" };
 
@@ -10,10 +12,11 @@ export default async function PanelInicio() {
   const paginas = await misPaginas();
   const nivel = nivelDe(perfil.nivel);
 
-  const [{ count: marcas }, { count: vinculos }, { data: avisos }] = await Promise.all([
+  const [{ count: marcas }, { count: vinculos }, { data: avisos }, { data: feed }] = await Promise.all([
     supabase.from("marcas").select("id", { count: "exact", head: true }).eq("usuario_id", perfil.id),
     supabase.from("vinculos").select("id", { count: "exact", head: true }).eq("persona_id", perfil.id).in("estado", ["solicitud", "aceptado"]),
     supabase.from("notificaciones").select("id, titulo, enlace, creado_en").eq("leida", false).order("creado_en", { ascending: false }).limit(5),
+    supabase.rpc("feed", { p_pestana: "amigos" }),
   ]);
 
   const pasos = [
@@ -56,9 +59,9 @@ export default async function PanelInicio() {
         </section>
       )}
 
-      <section className="tarjeta">
-        <h2 className="text-xl mb-3">Lo de hoy</h2>
-        {(avisos ?? []).length > 0 ? (
+      {(avisos ?? []).length > 0 && (
+        <section className="tarjeta">
+          <h2 className="text-xl mb-3">Avisos</h2>
           <ul className="grid gap-2">
             {(avisos ?? []).map((a) => (
               <li key={a.id}>
@@ -68,13 +71,10 @@ export default async function PanelInicio() {
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="text-suave">
-            Ya viste todo lo de hoy. 🌿 Cierra la app y ve a entrenar: aquí te esperamos con tus logros.
-          </p>
-        )}
-        <p className="mt-3 text-xs text-suave">Muy pronto: los logros de tus amigos y de tu zona.</p>
-      </section>
+        </section>
+      )}
+
+      <Feed inicial={(feed ?? []) as ItemFeed[]} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Link href="/panel/entrenar" className="tarjeta hover:!border-lava">

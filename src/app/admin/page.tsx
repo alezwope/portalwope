@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Cabecera from "@/components/Cabecera";
 import EstadoPagina from "@/components/EstadoPagina";
+import ReportesAdmin from "@/components/ReportesAdmin";
 import { requerirPerfil } from "@/lib/sesion";
 import { TIPOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
 
@@ -18,6 +19,7 @@ export default async function Admin() {
     supabase.from("parques").select("id", { count: "exact", head: true }),
     supabase.from("vinculos").select("id", { count: "exact", head: true }).eq("estado", "aceptado"),
   ]);
+  const { data: reportes } = await supabase.rpc("admin_reportes");
   const enRevision = (paginas ?? []).filter((p) => p.estado === "revision");
 
   return (
@@ -38,6 +40,8 @@ export default async function Admin() {
             <div key={t} className="tarjeta"><p className="text-sm text-suave">{t}</p><p className="titulo text-3xl">{Number(v).toLocaleString("es")}</p></div>
           ))}
         </div>
+
+        <ReportesAdmin inicial={(reportes ?? []) as React.ComponentProps<typeof ReportesAdmin>["inicial"]} />
 
         {enRevision.length > 0 && (
           <section className="tarjeta !border-dorado">
