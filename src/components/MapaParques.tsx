@@ -9,6 +9,7 @@ import { CATEGORIAS, nombreParque, urlComoLlegar, type CategoriaParque, type Pun
 const ORDEN: CategoriaParque[] = ["calistenia_oficial", "calistenia_etiquetada", "probable_calistenia", "estacion_fitness"];
 const ESTILO = "https://tiles.openfreemap.org/styles/liberty";
 
+type Calor = [string, number, number][];
 type Seleccion = { id: string; nombre: string | null; categoria: CategoriaParque; aparatos: number | null; lat: number; lng: number };
 
 function aGeoJSON(puntos: PuntoParque[], activas: Set<CategoriaParque>) {
@@ -35,6 +36,8 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
   const [busqueda, setBusqueda] = useState("");
   const [aviso, setAviso] = useState("");
   const [cargandoMapa, setCargandoMapa] = useState(true);
+  const [calorOn, setCalorOn] = useState(false);
+  const [calor, setCalor] = useState<Calor | null>(null);
 
   // 1. Datos
   useEffect(() => {
@@ -53,6 +56,25 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
   useEffect(() => {
     geojsonRef.current = geojson;
   }, [geojson]);
+
+  const calorGeo = useMemo(() => {
+    const act = new Map((calor ?? []).map((c) => [c[0], c]));
+    return {
+      type: "FeatureCollection" as const,
+      features: puntos
+        .filter((p) => act.has(p[0]))
+        .map((p) => ({
+          type: "Feature" as const,
+          geometry: { type: "Point" as const, coordinates: [p[2], p[1]] },
+          properties: { n30: act.get(p[0])![1], ahora: act.get(p[0])![2] },
+        })),
+    };
+  }, [puntos, calor]);
+  const calorRef = useRef(calorGeo);
+  useEffect(() => {
+    calorRef.current = calorGeo;
+  }, [calorGeo]);
+  const calorOnRef = useRef(false);
 
   // 2. Mapa (se crea una sola vez)
   useEffect(() => {
@@ -97,6 +119,32 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
           filter: ["has", "point_count"],
           layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 13, "text-font": ["Noto Sans Bold"] },
           paint: { "text-color": "#fff" },
+        });
+        const vis = calorOnRef.current ? "visible" : "none";
+        m.addSource("calor", { type: "geojson", data: calorRef.current });
+        m.addLayer(
+          {
+            id: "calor-mapa",
+            type: "heatmap",
+            source: "calor",
+            layout: { visibility: vis },
+            paint: {
+              "heatmap-weight": ["interpolate", ["linear"], ["get", "n30"], 1, 0.3, 20, 1],
+              "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 12, 2],
+              "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 3, 14, 12, 40, 16, 60],
+              "heatmap-opacity": 0.85,
+              "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"], 0, "rgba(232,84,12,0)", 0.25, "rgba(212,160,23,0.55)", 0.55, "rgba(232,84,12,0.8)", 1, "rgba(255,60,20,0.95)"],
+            },
+          },
+          "grupos",
+        );
+        m.addLayer({
+          id: "calor-ahora",
+          type: "circle",
+          source: "calor",
+          filter: [">", ["get", "ahora"], 0],
+          layout: { visibility: vis },
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 9, 14, 18], "circle-color": "rgba(0,0,0,0)", "circle-stroke-width": 3, "circle-stroke-color": "#D4A017" },
         });
         const colores: unknown[] = ["match", ["get", "categoria"]];
         for (const c of ORDEN) colores.push(c, CATEGORIAS[c].color);
@@ -157,6 +205,23 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
     if (!listo.current || !mapa.current) return;
     (mapa.current.getSource("parques") as GeoJSONSource | undefined)?.setData(geojson);
   }, [geojson]);
+
+  useEffect(() => {
+    calorOnRef.current = calorOn;
+    if (calorOn && !calor) {
+      fetch("/api/calor")
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((d: Calor) => setCalor(d))
+        .catch(() => setAviso("No pudimos cargar la actividad. Intenta de nuevo."));
+    }
+    const m = mapa.current;
+    if (!listo.current || !m) return;
+    for (const id of ["calor-mapa", "calor-ahora"]) m.setLayoutProperty(id, "visibility", calorOn ? "visible" : "none");
+  }, [calorOn, calor]);
+  useEffect(() => {
+    if (!listo.current || !mapa.current) return;
+    (mapa.current.getSource("calor") as GeoJSONSource | undefined)?.setData(calorGeo);
+  }, [calorGeo]);
 
   function alternar(c: CategoriaParque) {
     setActivas((previas) => {
@@ -239,6 +304,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
           )}
         </div>
         <button type="button" onClick={cercaDeMi} className="btn btn-lava">📍 Cerca de mí</button>
+        <button type="button" aria-pressed={calorOn} onClick={() => setCalorOn((v) => !v)} className={`btn ${calorOn ? "btn-dorado" : "btn-borde"}`}>🔥 Calor</button>
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Tipos de parque">
@@ -261,6 +327,13 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
         })}
       </div>
 
+      {calorOn && calor && (
+        <p className="text-sm text-suave">
+          {calor.length === 0
+            ? "Aún no hay check-ins. ¡Sé el primero en entrenar y marcar tu parque!"
+            : `Zonas más cálidas = más entrenamientos en los últimos 30 días. Círculo dorado = hay gente entrenando ahora (${calor.filter((c) => c[2] > 0).length} parques).`}
+        </p>
+      )}
       {(aviso || error) && <p className={error ? "aviso-error" : "aviso-ok"} role="status">{error || aviso}</p>}
 
       <div className="relative overflow-hidden rounded-2xl border border-borde" style={{ height: alto, minHeight: 360 }}>
@@ -277,6 +350,14 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
             </p>
             <p className="pr-6 text-lg font-bold">{nombreParque(seleccion.nombre, seleccion.categoria)}</p>
             {seleccion.aparatos ? <p className="text-sm text-suave">{seleccion.aparatos} aparato(s) registrados</p> : null}
+            {calorOn && calor && (() => {
+              const c = calor.find((x) => x[0] === seleccion.id);
+              return c ? (
+                <p className="text-sm text-dorado">{c[1]} entrenamiento(s) en 30 días{c[2] > 0 ? " · hay gente entrenando ahora" : ""}</p>
+              ) : (
+                <p className="text-sm text-suave">Sin entrenamientos registrados en 30 días.</p>
+              );
+            })()}
             <div className="flex flex-wrap gap-2">
               <Link href={`/parque/${seleccion.id}`} className="btn btn-lava !py-1.5">Ver ficha</Link>
               <a href={urlComoLlegar(seleccion.lat, seleccion.lng)} target="_blank" rel="noopener noreferrer" className="btn btn-borde !py-1.5">Cómo llegar</a>

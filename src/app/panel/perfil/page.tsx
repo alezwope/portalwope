@@ -35,7 +35,7 @@ export default async function PaginaPerfil() {
 
       <section id="privacidad" className="grid gap-3 scroll-mt-20">
         <h2 className="text-2xl">Privacidad y comunidad</h2>
-        <PrivacidadSocial usuarioId={perfil.id} actual={perfil.compartir_logros ?? "amigos"} bloqueados={(bloqueados ?? []) as { id: string; alias: string }[]} />
+        <PrivacidadSocial usuarioId={perfil.id} actual={perfil.compartir_logros === "nadie" ? "nadie" : "amigos"} bloqueados={(bloqueados ?? []) as { id: string; alias: string }[]} />
       </section>
 
       <section id="paginas" className="grid gap-3 scroll-mt-20">

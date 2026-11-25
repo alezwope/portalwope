@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { crearCliente } from "@/lib/supabase/client";
 import { mensajeError } from "@/lib/social";
 
-type Opcion = "amigos" | "zona" | "nadie";
+type Opcion = "amigos" | "nadie";
 const OPCIONES: { id: Opcion; texto: string; detalle: string }[] = [
-  { id: "amigos", texto: "Mis compañeros de barra", detalle: "Solo quienes aceptaste ven tus logros." },
-  { id: "zona", texto: "Mis compañeros y mi zona", detalle: "También aparecen en «Mi zona» para personas de tu misma ciudad (necesitas ciudad y país en tu perfil)." },
+  { id: "amigos", texto: "Mis compañeros de barra", detalle: "Solo quienes aceptaste ven tus logros. Nadie de tu zona los ve." },
   { id: "nadie", texto: "Solo yo", detalle: "Tus logros no se muestran a nadie más." },
 ];
 

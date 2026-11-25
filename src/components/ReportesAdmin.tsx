@@ -25,7 +25,7 @@ export default function ReportesAdmin({ inicial }: { inicial: Reporte[] }) {
       <ul className="grid gap-3">
         {lista.map((r) => (
           <li key={r.id} className="grid gap-1 rounded-lg border border-borde p-3 text-sm">
-            <p><strong>{r.tipo === "logro" ? "Logro" : "Publicación"}</strong> de @{r.autor ?? "?"}: <span className="break-words">«{r.texto}»</span></p>
+            <p><strong>{({ logro: "Logro", evento: "Evento", agrupacion: "Agrupación" } as Record<string, string>)[r.tipo] ?? "Publicación"}</strong> de @{r.autor ?? "?"}: <span className="break-words">«{r.texto}»</span></p>
             <p className="text-suave">Motivo: {r.motivo} · reportó @{r.reportante} · {hace(r.creado_en)}{r.oculta && " · ya oculta"}</p>
             <div className="flex gap-2 pt-1">
               <button className="btn btn-lava !py-1" onClick={() => resolver(r.id, true)}>{r.tipo === "logro" ? "Eliminar" : "Ocultar"}</button>

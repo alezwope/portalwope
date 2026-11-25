@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requerirPerfil } from "@/lib/sesion";
 import { NIVELES } from "@/lib/catalogos";
+import Constancia from "@/components/Constancia";
 
 export const metadata: Metadata = { title: "Entrenar" };
 
@@ -30,6 +31,8 @@ export default async function Entrenar() {
           </li>
         ))}
       </ol>
+
+      <Constancia />
 
       <div className="grid gap-4 sm:grid-cols-2">
         {HERRAMIENTAS.map((h) => (

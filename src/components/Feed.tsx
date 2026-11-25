@@ -6,6 +6,7 @@ import { crearCliente } from "@/lib/supabase/client";
 import { nivelDe } from "@/lib/catalogos";
 import { MOTIVOS_REPORTE, hace, mensajeError, type ItemFeed } from "@/lib/social";
 import Avatar from "@/components/Avatar";
+import Zona from "@/components/Zona";
 
 type Pestana = "amigos" | "zona" | "mios";
 const PESTANAS: { id: Pestana; texto: string }[] = [
@@ -15,7 +16,7 @@ const PESTANAS: { id: Pestana; texto: string }[] = [
 ];
 const VACIO: Record<Pestana, string> = {
   amigos: "Aún no hay novedades de tus amigos. Agrega compañeros de barra en Comunidad o comparte tu primer logro.",
-  zona: "No hay logros compartidos en tu zona todavía. Completa tu ciudad y país en el perfil; quienes elijan compartir con su zona aparecerán aquí.",
+  zona: "",
   mios: "Tus logros aparecerán aquí: tu nivel, tus primeras marcas y tus récords.",
 };
 
@@ -38,6 +39,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
   const [reportando, setReportando] = useState<string | null>(null);
 
   async function cargar(p: Pestana) {
+    if (p === "zona") return;
     setCargando(true);
     const { data, error } = await crearCliente().rpc("feed", { p_pestana: p });
     setCargando(false);
@@ -85,6 +87,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
 
   return (
     <section className="grid gap-4" aria-label="Novedades">
+      {pestana !== "zona" && (
       <form onSubmit={publicar} className="tarjeta grid gap-2">
         <label className="grid gap-1 text-sm">
           <span className="sr-only">Comparte con tus compañeros de barra</span>
@@ -102,6 +105,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
           <button className="btn btn-lava !py-1.5" disabled={cargando || texto.trim().length === 0}>Publicar</button>
         </div>
       </form>
+      )}
 
       <div role="tablist" aria-label="Qué ver" className="flex gap-2">
         {PESTANAS.map((p) => (
@@ -117,9 +121,11 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
         ))}
       </div>
 
-      {msg && <p className={msg.ok ? "aviso-ok" : "aviso-error"} role="status">{msg.texto}</p>}
+      {msg && pestana !== "zona" && <p className={msg.ok ? "aviso-ok" : "aviso-error"} role="status">{msg.texto}</p>}
 
-      {items.length === 0 && !cargando ? (
+      {pestana === "zona" ? (
+        <Zona />
+      ) : items.length === 0 && !cargando ? (
         <p className="tarjeta text-suave">{VACIO[pestana]}</p>
       ) : (
         <ul className="grid gap-3" aria-busy={cargando}>
@@ -168,7 +174,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
           })}
         </ul>
       )}
-      {items.length > 0 && <p className="text-center text-sm text-suave">Ya viste todo lo de hoy. 🌿 Ve a entrenar: aquí te esperamos con tus logros.</p>}
+      {pestana !== "zona" && items.length > 0 && <p className="text-center text-sm text-suave">Ya viste todo lo de hoy. 🌿 Ve a entrenar: aquí te esperamos con tus logros.</p>}
     </section>
   );
 }

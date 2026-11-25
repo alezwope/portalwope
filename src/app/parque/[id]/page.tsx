@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import Cabecera from "@/components/Cabecera";
+import CheckIn from "@/components/CheckIn";
 import { CATEGORIAS, nombreParque, urlComoLlegar, urlGoogleMaps, type CategoriaParque } from "@/lib/parques";
 
 export const revalidate = 3600;
@@ -62,10 +63,7 @@ export default async function FichaParque({ params }: PageProps<"/parque/[id]">)
           <p><strong className="text-texto">Fuente:</strong> {f.fuente ?? "OpenStreetMap"}{f.fecha_fuente ? ` (${f.fecha_fuente})` : ""}</p>
           <p>{f.atribucion || "© colaboradores de OpenStreetMap, licencia ODbL."}</p>
         </section>
-        <section className="tarjeta grid gap-1">
-          <p className="font-bold">Próximamente en esta ficha</p>
-          <p className="text-suave">Check-in, cuánta gente está entrenando, fotos y reseñas de la comunidad.</p>
-        </section>
+        <CheckIn parqueId={f.id} />
       </main>
     </>
   );
