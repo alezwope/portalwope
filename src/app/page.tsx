@@ -50,7 +50,7 @@ export default async function Inicio() {
             </div>
             {n.parques > 0 && (
               <p className="text-sm text-suave">
-                <strong className="text-texto">{n.parques.toLocaleString("es")}</strong> parques ya en el mapa
+                <Link href="/mapa" className="underline"><strong className="text-texto">{n.parques.toLocaleString("es")}</strong> parques ya en el mapa</Link>
                 {n.entrenadores > 0 && <> · <strong className="text-texto">{n.entrenadores}</strong> entrenadores</>}
               </p>
             )}

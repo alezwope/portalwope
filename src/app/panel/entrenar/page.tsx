@@ -6,10 +6,10 @@ import { NIVELES } from "@/lib/catalogos";
 export const metadata: Metadata = { title: "Entrenar" };
 
 const HERRAMIENTAS = [
-  { nombre: "CalisteniaGO", texto: "Tu programa guiado, nivel por nivel, de Génesis a Titán.", estado: "Próximamente" },
-  { nombre: "Nivelador", texto: "Descubre tu nivel con unas pocas pruebas.", estado: "Próximamente" },
-  { nombre: "City of Bars", texto: "Construye tu ciudad entrenando de verdad.", estado: "Próximamente" },
-  { nombre: "Calculadoras", texto: "IMC y más, con los datos de tu perfil.", estado: "Próximamente" },
+  { nombre: "CalisteniaGO", texto: "Tu programa guiado, nivel por nivel, de Génesis a Titán.", estado: "Próximamente", href: undefined as string | undefined },
+  { nombre: "Nivelador", texto: "Descubre tu nivel con unas pocas pruebas.", estado: "Disponible", href: "/nivelador" as string | undefined },
+  { nombre: "City of Bars", texto: "Construye tu ciudad entrenando de verdad.", estado: "Próximamente", href: undefined as string | undefined },
+  { nombre: "Calculadoras", texto: "IMC y más, con los datos de tu perfil.", estado: "Próximamente", href: undefined as string | undefined },
 ];
 
 export default async function Entrenar() {
@@ -39,6 +39,7 @@ export default async function Entrenar() {
               <span className="rounded-full border border-borde px-2 py-0.5 text-xs text-suave">{h.estado}</span>
             </div>
             <p className="text-suave">{h.texto}</p>
+            {h.href && <Link href={h.href} className="btn btn-lava mt-3 !py-1.5">Abrir</Link>}
           </section>
         ))}
       </div>
