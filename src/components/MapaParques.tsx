@@ -10,6 +10,8 @@ const ORDEN: CategoriaParque[] = ["calistenia_oficial", "calistenia_etiquetada",
 const ESTILO = "https://tiles.openfreemap.org/styles/liberty";
 
 type Calor = [string, number, number][];
+type Escuela = [string, string, string, number, number]; // slug, escuela, sede, lat, lng
+type EscuelaSel = { slug: string; nombre: string; sede: string };
 type Seleccion = { id: string; nombre: string | null; categoria: CategoriaParque; aparatos: number | null; lat: number; lng: number };
 
 function aGeoJSON(puntos: PuntoParque[], activas: Set<CategoriaParque>) {
@@ -38,6 +40,10 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
   const [cargandoMapa, setCargandoMapa] = useState(true);
   const [calorOn, setCalorOn] = useState(false);
   const [calor, setCalor] = useState<Calor | null>(null);
+  const [escuelasOn, setEscuelasOn] = useState(false);
+  const [escuelas, setEscuelas] = useState<Escuela[] | null>(null);
+  const [escuelaSel, setEscuelaSel] = useState<EscuelaSel | null>(null);
+  const escuelasOnRef = useRef(false);
 
   // 1. Datos
   useEffect(() => {
@@ -75,6 +81,21 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
     calorRef.current = calorGeo;
   }, [calorGeo]);
   const calorOnRef = useRef(false);
+  const escuelasGeo = useMemo(
+    () => ({
+      type: "FeatureCollection" as const,
+      features: (escuelas ?? []).map((e) => ({
+        type: "Feature" as const,
+        geometry: { type: "Point" as const, coordinates: [e[4], e[3]] },
+        properties: { slug: e[0], nombre: e[1], sede: e[2] },
+      })),
+    }),
+    [escuelas],
+  );
+  const escuelasRef = useRef(escuelasGeo);
+  useEffect(() => {
+    escuelasRef.current = escuelasGeo;
+  }, [escuelasGeo]);
 
   // 2. Mapa (se crea una sola vez)
   useEffect(() => {
@@ -146,6 +167,22 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
           layout: { visibility: vis },
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 9, 14, 18], "circle-color": "rgba(0,0,0,0)", "circle-stroke-width": 3, "circle-stroke-color": "#D4A017" },
         });
+        m.addSource("escuelas", { type: "geojson", data: escuelasRef.current });
+        m.addLayer({
+          id: "escuelas-pin",
+          type: "circle",
+          source: "escuelas",
+          layout: { visibility: escuelasOnRef.current ? "visible" : "none" },
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 7, 14, 12], "circle-color": "#D4A017", "circle-stroke-width": 3, "circle-stroke-color": "#0D0B0A" },
+        });
+        m.on("click", "escuelas-pin", (e: MapMouseEvent) => {
+          const f = m.queryRenderedFeatures(e.point, { layers: ["escuelas-pin"] })[0];
+          if (!f) return;
+          setSeleccion(null);
+          setEscuelaSel({ slug: f.properties.slug, nombre: f.properties.nombre, sede: f.properties.sede });
+        });
+        m.on("mouseenter", "escuelas-pin", () => (m.getCanvas().style.cursor = "pointer"));
+        m.on("mouseleave", "escuelas-pin", () => (m.getCanvas().style.cursor = ""));
         const colores: unknown[] = ["match", ["get", "categoria"]];
         for (const c of ORDEN) colores.push(c, CATEGORIAS[c].color);
         colores.push("#8E8E93");
@@ -181,7 +218,10 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
           m.on("mouseleave", capa, () => (m.getCanvas().style.cursor = ""));
         }
         m.on("click", (e) => {
-          if (!m.queryRenderedFeatures(e.point, { layers: ["grupos", "puntos"] }).length) setSeleccion(null);
+          if (!m.queryRenderedFeatures(e.point, { layers: ["grupos", "puntos", "escuelas-pin"] }).length) {
+            setSeleccion(null);
+            setEscuelaSel(null);
+          }
         });
         listo.current = true;
         setCargandoMapa(false);
@@ -218,6 +258,23 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
     if (!listo.current || !m) return;
     for (const id of ["calor-mapa", "calor-ahora"]) m.setLayoutProperty(id, "visibility", calorOn ? "visible" : "none");
   }, [calorOn, calor]);
+  useEffect(() => {
+    escuelasOnRef.current = escuelasOn;
+    if (escuelasOn && !escuelas) {
+      fetch("/api/escuelas")
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((d: Escuela[]) => setEscuelas(d))
+        .catch(() => setAviso("No pudimos cargar las escuelas. Intenta de nuevo."));
+    }
+    const m = mapa.current;
+    if (!listo.current || !m) return;
+    m.setLayoutProperty("escuelas-pin", "visibility", escuelasOn ? "visible" : "none");
+    if (!escuelasOn) setEscuelaSel(null);
+  }, [escuelasOn, escuelas]);
+  useEffect(() => {
+    if (!listo.current || !mapa.current) return;
+    (mapa.current.getSource("escuelas") as GeoJSONSource | undefined)?.setData(escuelasGeo);
+  }, [escuelasGeo]);
   useEffect(() => {
     if (!listo.current || !mapa.current) return;
     (mapa.current.getSource("calor") as GeoJSONSource | undefined)?.setData(calorGeo);
@@ -305,6 +362,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
         </div>
         <button type="button" onClick={cercaDeMi} className="btn btn-lava">📍 Cerca de mí</button>
         <button type="button" aria-pressed={calorOn} onClick={() => setCalorOn((v) => !v)} className={`btn ${calorOn ? "btn-dorado" : "btn-borde"}`}>🔥 Calor</button>
+        <button type="button" aria-pressed={escuelasOn} onClick={() => setEscuelasOn((v) => !v)} className={`btn ${escuelasOn ? "btn-dorado" : "btn-borde"}`}>🏫 Escuelas</button>
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Tipos de parque">
@@ -340,6 +398,15 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
         <div ref={contenedor} className="absolute inset-0" aria-label="Mapa de parques de calistenia" />
         {cargandoMapa && (
           <div className="absolute inset-0 grid place-items-center bg-card text-suave">Cargando el mapa…</div>
+        )}
+        {escuelaSel && (
+          <div className="absolute inset-x-3 bottom-8 z-10 mx-auto grid max-w-md gap-2 rounded-xl border border-borde bg-card p-4 shadow-xl">
+            <button type="button" onClick={() => setEscuelaSel(null)} className="absolute right-3 top-2 text-suave hover:text-lava" aria-label="Cerrar">✕</button>
+            <p className="text-xs text-dorado">🏫 Escuela de calistenia</p>
+            <p className="pr-6 text-lg font-bold">{escuelaSel.nombre}</p>
+            <p className="text-sm text-suave">Sede: {escuelaSel.sede}</p>
+            <Link href={`/e/${escuelaSel.slug}`} className="btn btn-lava justify-self-start !py-1.5">Ver escuela</Link>
+          </div>
         )}
         {seleccion && (
           <div className="absolute inset-x-3 bottom-8 z-10 mx-auto grid max-w-md gap-2 rounded-xl border border-borde bg-card p-4 shadow-xl">

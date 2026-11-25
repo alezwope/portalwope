@@ -1,0 +1,6 @@
+-- Fase E2: entrenador = escuela (una sola) + sedes con pin en el mapa. YA APLICADA en Supabase (copia de referencia).
+-- crear_pagina('entrenador', ...) crea también la escuela (mismo nombre) y al dueño como miembro 'dueno'.
+-- Trigger interno.sincronizar_escuela: al renombrar la página de entrenador se renombra su escuela principal.
+-- Tabla sedes (pagina_id, nombre 2-60, horario ≤120, ciudad, pais, parque_id, geom Point 4326), máx. 10 por página, sin acceso directo (RLS + revoke).
+-- RPCs: agregar_sede(p_pagina,p_nombre,p_horario,p_ciudad,p_pais,p_lat,p_lng,p_parque) y borrar_sede(p_id) [authenticated];
+--       sedes_pagina(p_pagina) y escuelas_mapa() [anon+authenticated]. Definiciones completas: pg_get_functiondef en Supabase.

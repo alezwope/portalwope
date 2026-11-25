@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { crearCliente } from "@/lib/supabase/client";
 import type { Perfil } from "@/lib/sesion";
 import { NIVELES, OBJETIVOS } from "@/lib/catalogos";
+import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
   const router = useRouter();
   const [alias, setAlias] = useState(perfil.alias ?? "");
   const [nombre, setNombre] = useState(perfil.nombre ?? "");
   const [bio, setBio] = useState(perfil.bio ?? "");
-  const [ciudad, setCiudad] = useState(perfil.ciudad ?? "");
-  const [pais, setPais] = useState(perfil.pais ?? "");
+  const [ub, setUb] = useState<Ubicacion>({ pais: perfil.pais ?? "", ciudad: perfil.ciudad ?? "" });
   const [invisible, setInvisible] = useState(perfil.modo_invisible);
   const [nivel, setNivel] = useState(perfil.nivel ?? "");
   const [objetivo, setObjetivo] = useState(perfil.objetivo ?? "");
@@ -33,8 +33,8 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
         alias: a,
         nombre: nombre.trim() || null,
         bio: bio.trim() || null,
-        ciudad: ciudad.trim() || null,
-        pais: pais.trim().toUpperCase() || null,
+        ciudad: ub.ciudad.trim() || null,
+        pais: ub.pais || null,
         modo_invisible: invisible,
         nivel: nivel || null,
         objetivo: objetivo || null,
@@ -62,16 +62,7 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
         Sobre ti
         <textarea className="campo" rows={3} maxLength={280} value={bio} onChange={(e) => setBio(e.target.value)} />
       </label>
-      <div className="grid grid-cols-[1fr_6rem] gap-3">
-        <label className="grid gap-1 text-sm">
-          Ciudad
-          <input className="campo" value={ciudad} onChange={(e) => setCiudad(e.target.value)} />
-        </label>
-        <label className="grid gap-1 text-sm">
-          País
-          <input className="campo uppercase" maxLength={2} value={pais} onChange={(e) => setPais(e.target.value)} />
-        </label>
-      </div>
+      <SelectorUbicacion valor={ub} onCambio={setUb} />
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1 text-sm">
           Tu nivel

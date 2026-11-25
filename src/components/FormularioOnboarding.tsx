@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { crearCliente } from "@/lib/supabase/client";
 import { NIVELES, OBJETIVOS } from "@/lib/catalogos";
+import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 export default function FormularioOnboarding({ nombreInicial, siguiente }: { nombreInicial: string; siguiente: string }) {
   const [alias, setAlias] = useState("");
@@ -10,6 +11,10 @@ export default function FormularioOnboarding({ nombreInicial, siguiente }: { nom
   const [nivel, setNivel] = useState("");
   const [objetivo, setObjetivo] = useState("");
   const [mayor, setMayor] = useState(false);
+  const [esEntrenador, setEsEntrenador] = useState(false);
+  const [escuela, setEscuela] = useState("");
+  const [ub, setUb] = useState<Ubicacion>({ pais: "", ciudad: "" });
+  const [aviso, setAviso] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -19,6 +24,7 @@ export default function FormularioOnboarding({ nombreInicial, siguiente }: { nom
     const a = alias.trim().toLowerCase();
     if (!/^[a-z0-9_]{3,20}$/.test(a)) return setError("El alias debe tener de 3 a 20 caracteres: letras sin tilde, números o guion bajo.");
     if (!mayor) return setError("UniBars es solo para mayores de 18 años.");
+    if (esEntrenador && (!ub.pais || !ub.ciudad.trim())) return setError("Elige el país y la ciudad donde das clase.");
     setCargando(true);
     const { error } = await crearCliente().rpc("completar_onboarding", {
       p_alias: a,
@@ -30,7 +36,20 @@ export default function FormularioOnboarding({ nombreInicial, siguiente }: { nom
     if (error) {
       setError(error.message.includes("profiles_alias_key") ? "Ese alias ya está en uso. Elige otro." : error.message);
       setCargando(false);
-    } else window.location.assign(siguiente);
+      return;
+    }
+    if (!esEntrenador) return window.location.assign(siguiente);
+    const c = crearCliente();
+    await c.from("profiles").update({ ciudad: ub.ciudad.trim(), pais: ub.pais }).eq("id", (await c.auth.getUser()).data.user!.id);
+    const { error: e2 } = await c.rpc("crear_pagina", {
+      p_tipo: "entrenador", p_nombre: (escuela.trim() || nombre.trim() || a), p_ciudad: ub.ciudad, p_pais: ub.pais, p_especialidad: "",
+    });
+    if (e2) {
+      setAviso("Tu cuenta quedó creada, pero no pudimos abrir tu escuela (" + e2.message + "). Puedes hacerlo desde Perfil.");
+      setCargando(false);
+      return;
+    }
+    window.location.assign("/panel/entrenador/escuela");
   }
 
   return (
@@ -73,9 +92,30 @@ export default function FormularioOnboarding({ nombreInicial, siguiente }: { nom
         <span>Declaro que soy mayor de 18 años y acepto los términos de uso y la política de privacidad de UniBars.</span>
       </label>
 
+      <div className="tarjeta grid gap-3">
+        <label className="flex items-start gap-3 text-sm">
+          <input type="checkbox" checked={esEntrenador} onChange={(e) => setEsEntrenador(e.target.checked)} className="mt-1 accent-[var(--lava)]" />
+          <span><strong>Soy entrenador y quiero abrir mi escuela</strong><br /><span className="text-suave">Se crea al instante: tu página de entrenador es tu escuela. Después agregas tus sedes en el mapa.</span></span>
+        </label>
+        {esEntrenador && (
+          <>
+            <label className="grid gap-1 text-sm">
+              Nombre de tu escuela (opcional: si lo dejas vacío usamos tu nombre)
+              <input className="campo" maxLength={60} value={escuela} onChange={(e) => setEscuela(e.target.value)} placeholder={nombre || "Alejandro Calistenia"} />
+            </label>
+            <SelectorUbicacion etiqueta="¿Dónde das clase? (ciudad principal)" valor={ub} onCambio={setUb} />
+          </>
+        )}
+      </div>
+
       {error && <p className="aviso-error" role="alert">{error}</p>}
-      <button className="btn btn-lava" disabled={cargando}>{cargando ? "Guardando…" : "Entrar a UniBars"}</button>
-      <p className="text-xs text-suave">¿Eres entrenador, tienes una tienda o das servicios de salud? Lo activas después desde tu perfil.</p>
+      {aviso && (
+        <p className="aviso-error" role="alert">
+          {aviso} <a className="underline" href={siguiente}>Continuar</a>
+        </p>
+      )}
+      <button className="btn btn-lava" disabled={cargando}>{cargando ? "Guardando…" : esEntrenador ? "Crear cuenta y mi escuela" : "Entrar a UniBars"}</button>
+      <p className="text-xs text-suave">¿Tienes una tienda o das servicios de salud? Lo activas después desde tu perfil.</p>
     </form>
   );
 }

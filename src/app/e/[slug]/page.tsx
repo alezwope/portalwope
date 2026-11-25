@@ -6,6 +6,7 @@ import SolicitarEntrenamiento from "@/components/SolicitarEntrenamiento";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { MODALIDADES, NIVELES, OBJETIVOS, TIPOS_PAGINA, ESTADOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
 import type { Pagina } from "@/lib/sesion";
+import { urlComoLlegar } from "@/lib/parques";
 
 async function cargar(slug: string) {
   const supabase = await crearClienteServidor();
@@ -46,6 +47,8 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
     esMia = ((mias ?? []) as { id: string }[]).some((m) => m.id === pagina.id);
   }
 
+  const { data: sedesRaw } = await supabase.rpc("sedes_pagina", { p_pagina: pagina.id });
+  const sedes = (sedesRaw ?? []) as { id: string; nombre: string; horario: string | null; ciudad: string | null; lat: number; lng: number }[];
   const recibe = pagina.tipo !== "tienda" && pagina.estado === "activa";
   const volver = `/e/${pagina.slug}`;
 
@@ -67,9 +70,22 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
 
         {pagina.bio && <p className="tarjeta whitespace-pre-line">{pagina.bio}</p>}
 
-        {(pagina.lugar || pagina.contacto_url) && (
+        {sedes.length > 0 && (
+          <section className="tarjeta grid gap-2">
+            <h2 className="text-xl text-lava">Dónde da clase</h2>
+            <ul className="grid gap-2">
+              {sedes.map((d) => (
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <span><strong>📍 {d.nombre}</strong>{[d.horario, d.ciudad].filter(Boolean).length ? <span className="text-suave"> · {[d.horario, d.ciudad].filter(Boolean).join(" · ")}</span> : null}</span>
+                  <a className="btn btn-borde !py-1" href={urlComoLlegar(d.lat, d.lng)} target="_blank" rel="noopener noreferrer">Cómo llegar</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {pagina.contacto_url && (
           <section className="tarjeta flex flex-wrap items-center gap-3">
-            {pagina.lugar && <p><strong>Entrena en:</strong> {pagina.lugar}</p>}
             {pagina.contacto_url && (
               <a href={pagina.contacto_url} target="_blank" rel="noopener noreferrer nofollow ugc" className="btn btn-borde !py-1.5">Contactar por sus redes</a>
             )}
@@ -115,7 +131,7 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
             )}
           </section>
         )}
-        {esMia && <Link href={pagina.tipo === "entrenador" ? "/panel/entrenador/ficha" : "/panel/perfil#paginas"} className="btn btn-borde justify-self-start">Editar mi página</Link>}
+        {esMia && <Link href={pagina.tipo === "entrenador" ? "/panel/entrenador/escuela" : "/panel/perfil#paginas"} className="btn btn-borde justify-self-start">Editar mi página</Link>}
       </main>
     </>
   );

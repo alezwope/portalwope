@@ -16,9 +16,8 @@ const PERSONAL: Enlace[] = [
 const ENTRENADOR: Enlace[] = [
   { href: "/panel/entrenador", texto: "Solicitudes", icono: "📥", exacto: true },
   { href: "/panel/entrenador/alumnos", texto: "Alumnos", icono: "🧑‍🤝‍🧑" },
-  { href: "/panel/entrenador/escuela", texto: "Escuela", icono: "🏫" },
+  { href: "/panel/entrenador/escuela", texto: "Mi escuela", icono: "🏫" },
   { href: "/panel/entrenador/invitar", texto: "Invitar", icono: "🔗" },
-  { href: "/panel/entrenador/ficha", texto: "Ficha", icono: "📝" },
 ];
 
 export default function NavPrincipal() {

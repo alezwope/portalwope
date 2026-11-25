@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { crearCliente } from "@/lib/supabase/client";
 import type { Pagina } from "@/lib/sesion";
 import { MODALIDADES, NIVELES, OBJETIVOS } from "@/lib/catalogos";
+import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 function Casillas({ titulo, opciones, valor, cambiar }: { titulo: string; opciones: [string, string][]; valor: string[]; cambiar: (v: string[]) => void }) {
   return (
@@ -29,9 +30,7 @@ export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
   const router = useRouter();
   const [nombre, setNombre] = useState(pagina.nombre);
   const [bio, setBio] = useState(pagina.bio ?? "");
-  const [ciudad, setCiudad] = useState(pagina.ciudad ?? "");
-  const [pais, setPais] = useState(pagina.pais ?? "");
-  const [lugar, setLugar] = useState(pagina.lugar ?? "");
+  const [ub, setUb] = useState<Ubicacion>({ pais: pagina.pais ?? "", ciudad: pagina.ciudad ?? "" });
   const [contacto, setContacto] = useState(pagina.contacto_url ?? "");
   const [modalidades, setModalidades] = useState(pagina.modalidades);
   const [niveles, setNiveles] = useState(pagina.atiende_niveles);
@@ -49,9 +48,8 @@ export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
       .update({
         nombre: nombre.trim(),
         bio: bio.trim() || null,
-        ciudad: ciudad.trim() || null,
-        pais: pais.trim().toUpperCase() || null,
-        lugar: lugar.trim() || null,
+        ciudad: ub.ciudad.trim() || null,
+        pais: ub.pais || null,
         contacto_url: contacto.trim() || null,
         modalidades,
         atiende_niveles: niveles,
@@ -77,27 +75,14 @@ export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
   return (
     <form onSubmit={guardar} className="tarjeta grid gap-4">
       <label className="grid gap-1 text-sm">
-        Nombre público
+        Nombre de tu escuela (puede ser tu nombre)
         <input className="campo" required maxLength={60} value={nombre} onChange={(e) => setNombre(e.target.value)} />
       </label>
       <label className="grid gap-1 text-sm">
         Presentación
         <textarea className="campo" rows={4} maxLength={600} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tu experiencia, tu método, dónde entrenas…" />
       </label>
-      <div className="grid grid-cols-[1fr_6rem] gap-3">
-        <label className="grid gap-1 text-sm">
-          Ciudad
-          <input className="campo" maxLength={60} value={ciudad} onChange={(e) => setCiudad(e.target.value)} />
-        </label>
-        <label className="grid gap-1 text-sm">
-          País
-          <input className="campo uppercase" maxLength={2} value={pais} onChange={(e) => setPais(e.target.value)} />
-        </label>
-      </div>
-      <label className="grid gap-1 text-sm">
-        Dónde entrenas (parque o plaza, opcional)
-        <input className="campo" maxLength={120} value={lugar} onChange={(e) => setLugar(e.target.value)} placeholder="Ej. Parque Centenario, CABA" />
-      </label>
+      <SelectorUbicacion etiqueta="Ciudad principal de tu escuela" valor={ub} onCambio={setUb} />
       <label className="grid gap-1 text-sm">
         Enlace de contacto (opcional)
         <input className="campo" type="url" maxLength={200} value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder="Instagram, WhatsApp, YouTube, Facebook o Telegram" />
