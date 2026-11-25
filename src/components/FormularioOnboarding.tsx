@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { crearCliente } from "@/lib/supabase/client";
-import { ROLES, ROLES_ELEGIBLES, type Rol } from "@/lib/roles";
+import { NIVELES, OBJETIVOS } from "@/lib/catalogos";
 
-export default function FormularioOnboarding({ nombreInicial }: { nombreInicial: string }) {
-  const [rol, setRol] = useState<Rol>("alumno");
+export default function FormularioOnboarding({ nombreInicial, siguiente }: { nombreInicial: string; siguiente: string }) {
   const [alias, setAlias] = useState("");
   const [nombre, setNombre] = useState(nombreInicial);
+  const [nivel, setNivel] = useState("");
+  const [objetivo, setObjetivo] = useState("");
   const [mayor, setMayor] = useState(false);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -20,39 +21,51 @@ export default function FormularioOnboarding({ nombreInicial }: { nombreInicial:
     if (!mayor) return setError("UniBars es solo para mayores de 18 años.");
     setCargando(true);
     const { error } = await crearCliente().rpc("completar_onboarding", {
-      p_rol: rol,
       p_alias: a,
       p_nombre: nombre,
       p_mayor: mayor,
+      p_nivel: nivel || null,
+      p_objetivo: objetivo || null,
     });
     if (error) {
       setError(error.message.includes("profiles_alias_key") ? "Ese alias ya está en uso. Elige otro." : error.message);
       setCargando(false);
-    } else window.location.assign("/panel");
+    } else window.location.assign(siguiente);
   }
 
   return (
     <form onSubmit={enviar} className="grid gap-5">
-      <fieldset className="grid gap-3">
-        <legend className="mb-2 font-bold">¿Cómo quieres participar?</legend>
-        {ROLES_ELEGIBLES.map((r) => (
-          <label key={r} className={`tarjeta flex cursor-pointer items-start gap-3 ${rol === r ? "!border-lava" : ""}`}>
-            <input type="radio" name="rol" value={r} checked={rol === r} onChange={() => setRol(r)} className="mt-1 accent-[var(--lava)]" />
-            <span>
-              <span className="block font-bold">{ROLES[r].nombre}</span>
-              <span className="text-sm text-suave">{ROLES[r].resumen}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-
       <label className="grid gap-1 text-sm">
-        Tu alias (así te verá la comunidad; podrás usar tu nombre real si quieres)
-        <input className="campo" required value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="lobo_solitario" autoComplete="off" />
+        Tu alias (así te verá la comunidad)
+        <input className="campo" required value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="lobo_de_barra" autoComplete="off" />
       </label>
       <label className="grid gap-1 text-sm">
         Tu nombre (opcional, es privado)
         <input className="campo" value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="name" />
+      </label>
+
+      <fieldset className="grid gap-2">
+        <legend className="mb-1 text-sm">¿En qué nivel estás? (opcional)</legend>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {[{ clave: "", nombre: "No lo sé", etapa: "Lo descubrimos juntos", color: "var(--suave)" }, ...NIVELES].map((n) => (
+            <label
+              key={n.clave || "nose"}
+              className={`tarjeta !p-3 cursor-pointer text-sm ${nivel === n.clave ? "!border-lava" : ""}`}
+            >
+              <input type="radio" name="nivel" className="sr-only" checked={nivel === n.clave} onChange={() => setNivel(n.clave)} />
+              <span className="block font-bold" style={{ color: n.color }}>{n.nombre}</span>
+              <span className="text-suave">{n.etapa}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <label className="grid gap-1 text-sm">
+        ¿Qué buscas? (opcional)
+        <select className="campo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)}>
+          <option value="">Prefiero no decirlo ahora</option>
+          {Object.entries(OBJETIVOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
       </label>
 
       <label className="flex items-start gap-3 text-sm">
@@ -62,6 +75,7 @@ export default function FormularioOnboarding({ nombreInicial }: { nombreInicial:
 
       {error && <p className="aviso-error" role="alert">{error}</p>}
       <button className="btn btn-lava" disabled={cargando}>{cargando ? "Guardando…" : "Entrar a UniBars"}</button>
+      <p className="text-xs text-suave">¿Eres entrenador, tienes una tienda o das servicios de salud? Lo activas después desde tu perfil.</p>
     </form>
   );
 }

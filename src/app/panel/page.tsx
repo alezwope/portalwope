@@ -1,69 +1,102 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requerirPerfil } from "@/lib/sesion";
-import { NIVELES, ROLES } from "@/lib/roles";
+import { misPaginas, requerirPerfil } from "@/lib/sesion";
+import { OBJETIVOS, nivelDe, type Objetivo } from "@/lib/catalogos";
 
 export const metadata: Metadata = { title: "Inicio" };
 
 export default async function PanelInicio() {
   const { supabase, perfil } = await requerirPerfil();
-  const rol = perfil.rol_principal!;
+  const paginas = await misPaginas();
+  const nivel = nivelDe(perfil.nivel);
 
-  const { data: membresias } = await supabase
-    .from("escuela_miembros")
-    .select("rol_en_escuela, escuelas(nombre, slug)")
-    .eq("usuario_id", perfil.id);
-  const escuela = (membresias?.[0]?.escuelas ?? null) as unknown as { nombre: string; slug: string } | null;
+  const [{ count: marcas }, { count: vinculos }, { data: avisos }] = await Promise.all([
+    supabase.from("marcas").select("id", { count: "exact", head: true }).eq("usuario_id", perfil.id),
+    supabase.from("vinculos").select("id", { count: "exact", head: true }).eq("persona_id", perfil.id).in("estado", ["solicitud", "aceptado"]),
+    supabase.from("notificaciones").select("id, titulo, enlace, creado_en").eq("leida", false).order("creado_en", { ascending: false }).limit(5),
+  ]);
 
-  const { count: sinLeer } = await supabase
-    .from("notificaciones")
-    .select("id", { count: "exact", head: true })
-    .eq("leida", false);
+  const pasos = [
+    { hecho: !!nivel, texto: "Elige tu nivel", detalle: "Así te mostramos lo que te sirve.", href: "/panel/perfil" },
+    { hecho: !!marcas, texto: "Registra tus primeras marcas", detalle: "Tus máximos de repeticiones: tu punto de partida.", href: "/panel/perfil#entrenamiento" },
+    { hecho: !!vinculos, texto: "Encuentra un entrenador", detalle: "Opcional: alguien que te guíe nivel por nivel.", href: "/panel/comunidad" },
+  ];
+  const pendientes = pasos.filter((p) => !p.hecho);
 
   return (
     <div className="grid gap-6">
-      <div>
+      <header>
         <h1 className="text-3xl">¡Hola, @{perfil.alias}!</h1>
-        <p className="text-suave">Estás en UniBars como {ROLES[rol].nombre}. {ROLES[rol].resumen}</p>
-      </div>
+        <p className="text-suave">
+          {nivel ? (
+            <>Nivel <strong style={{ color: nivel.color }}>{nivel.nombre}</strong></>
+          ) : (
+            "Aún sin nivel"
+          )}
+          {perfil.objetivo && <> · Objetivo: {OBJETIVOS[perfil.objetivo as Objetivo]}</>}
+        </p>
+      </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {(rol === "coach" || rol === "alumno") && (
-          <section className="tarjeta">
-            <h2 className="text-xl mb-2">Mi escuela</h2>
-            {escuela ? (
-              <p>Perteneces a <strong>{escuela.nombre}</strong>.</p>
-            ) : (
-              <p className="text-suave">Aún no perteneces a ninguna escuela.</p>
-            )}
-            <Link href="/panel/escuela" className="btn btn-lava mt-3">
-              {escuela ? "Ver mi escuela" : rol === "coach" ? "Crear o unirme a una escuela" : "Buscar una escuela"}
-            </Link>
-          </section>
-        )}
-
+      {pendientes.length > 0 && (
         <section className="tarjeta">
-          <h2 className="text-xl mb-2">Avisos</h2>
-          <p className="text-suave">{sinLeer ? `Tienes ${sinLeer} aviso(s) sin leer.` : "Estás al día."}</p>
-          <Link href="/panel/notificaciones" className="btn btn-borde mt-3">Ver avisos</Link>
+          <h2 className="text-xl mb-3">Tus primeros pasos</h2>
+          <ol className="grid gap-2">
+            {pasos.map((p) => (
+              <li key={p.texto}>
+                <Link href={p.href} className={`flex items-start gap-3 rounded-lg p-2 hover:bg-bg ${p.hecho ? "opacity-60" : ""}`}>
+                  <span aria-hidden className="text-lg">{p.hecho ? "✅" : "⬜"}</span>
+                  <span>
+                    <span className="block font-bold">{p.texto}</span>
+                    <span className="text-sm text-suave">{p.detalle}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
         </section>
-
-        <section className="tarjeta">
-          <h2 className="text-xl mb-2">Tu perfil</h2>
-          <p className="text-suave">Ajusta tu alias, tu ciudad y tu privacidad.</p>
-          <Link href="/panel/perfil" className="btn btn-borde mt-3">Editar perfil</Link>
-        </section>
-      </div>
+      )}
 
       <section className="tarjeta">
-        <h2 className="text-xl mb-3">Lo que viene en UniBars</h2>
-        <ul className="grid gap-2 text-suave sm:grid-cols-2">
-          <li>🗺️ Mapa mundial de parques de calistenia y check-ins</li>
-          <li>💬 Comunidad: feed, amistades, retos</li>
-          <li>🏋️ Entrenamientos y planes de tu coach</li>
-          <li>🔥 Niveles: {NIVELES.map((n) => n.nombre).join(" → ")}</li>
-        </ul>
+        <h2 className="text-xl mb-3">Lo de hoy</h2>
+        {(avisos ?? []).length > 0 ? (
+          <ul className="grid gap-2">
+            {(avisos ?? []).map((a) => (
+              <li key={a.id}>
+                <Link href={a.enlace ?? "/panel/notificaciones"} className="block rounded-lg border border-borde p-3 hover:border-lava">
+                  {a.titulo}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-suave">
+            Ya viste todo lo de hoy. 🌿 Cierra la app y ve a entrenar: aquí te esperamos con tus logros.
+          </p>
+        )}
+        <p className="mt-3 text-xs text-suave">Muy pronto: los logros de tus amigos y de tu zona.</p>
       </section>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Link href="/panel/entrenar" className="tarjeta hover:!border-lava">
+          <h2 className="text-xl text-lava">CalisteniaGO</h2>
+          <p className="text-suave">Tu programa guiado, nivel por nivel. Próximamente.</p>
+        </Link>
+        {paginas.some((p) => p.tipo === "entrenador") ? (
+          <Link href="/panel/entrenador" className="tarjeta hover:!border-lava">
+            <h2 className="text-xl text-lava">Tu panel de entrenador</h2>
+            <p className="text-suave">Solicitudes, alumnos, escuela e invitaciones.</p>
+          </Link>
+        ) : (
+          <Link href="/panel/perfil#paginas" className="tarjeta hover:!border-lava">
+            <h2 className="text-xl text-lava">¿Eres entrenador?</h2>
+            <p className="text-suave">Crea tu página de entrenador: 10 alumnos gratis.</p>
+          </Link>
+        )}
+      </div>
+
+      {perfil.es_admin && (
+        <Link href="/admin" className="btn btn-borde justify-self-start">Administración</Link>
+      )}
     </div>
   );
 }

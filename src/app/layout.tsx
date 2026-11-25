@@ -5,8 +5,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: { default: "UniBars · El Universo de las Barras", template: "%s · UniBars" },
   description:
-    "La red social de la calistenia: escuelas, coaches, alumnos y atletas conectados, con mapa mundial de parques, niveles y comunidad.",
+    "La red social de la calistenia: parques, niveles, entrenadores y comunidad en un solo lugar.",
   icons: { icon: "/icon.png", apple: "/brand/icon-192.png" },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     title: "UniBars · El Universo de las Barras",
     description: "La red social de la calistenia.",

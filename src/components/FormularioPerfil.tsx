@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { crearCliente } from "@/lib/supabase/client";
 import type { Perfil } from "@/lib/sesion";
+import { NIVELES, OBJETIVOS } from "@/lib/catalogos";
 
 export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
   const router = useRouter();
@@ -13,6 +14,8 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
   const [ciudad, setCiudad] = useState(perfil.ciudad ?? "");
   const [pais, setPais] = useState(perfil.pais ?? "");
   const [invisible, setInvisible] = useState(perfil.modo_invisible);
+  const [nivel, setNivel] = useState(perfil.nivel ?? "");
+  const [objetivo, setObjetivo] = useState(perfil.objetivo ?? "");
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -33,6 +36,8 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
         ciudad: ciudad.trim() || null,
         pais: pais.trim().toUpperCase() || null,
         modo_invisible: invisible,
+        nivel: nivel || null,
+        objetivo: objetivo || null,
       })
       .eq("id", perfil.id);
     setCargando(false);
@@ -65,6 +70,22 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
         <label className="grid gap-1 text-sm">
           País
           <input className="campo uppercase" maxLength={2} value={pais} onChange={(e) => setPais(e.target.value)} />
+        </label>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="grid gap-1 text-sm">
+          Tu nivel
+          <select className="campo" value={nivel} onChange={(e) => setNivel(e.target.value)}>
+            <option value="">No lo sé todavía</option>
+            {NIVELES.map((n) => <option key={n.clave} value={n.clave}>{n.nombre} · {n.etapa}</option>)}
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm">
+          Tu objetivo
+          <select className="campo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)}>
+            <option value="">Sin definir</option>
+            {Object.entries(OBJETIVOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
         </label>
       </div>
       <label className="flex items-start gap-3 text-sm">

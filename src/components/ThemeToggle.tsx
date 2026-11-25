@@ -6,6 +6,8 @@ export default function ThemeToggle() {
   const [claro, setClaro] = useState(false);
 
   useEffect(() => {
+    // Sincroniza con el tema aplicado antes de hidratar (evita diferencias servidor/cliente).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setClaro(document.documentElement.dataset.tema === "claro");
   }, []);
 
