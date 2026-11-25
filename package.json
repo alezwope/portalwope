@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node -e \"const f=require('fs');f.mkdirSync('public/maplibre',{recursive:true});for(const n of ['worker','shared'])f.copyFileSync('node_modules/maplibre-gl/dist/maplibre-gl-'+n+'.mjs','public/maplibre/maplibre-gl-'+n+'.mjs')\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

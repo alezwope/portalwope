@@ -60,6 +60,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
     let instancia: MapaMapLibre | null = null;
     (async () => {
       const maplibregl = await import("maplibre-gl");
+      maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
       if (cancelado || !contenedor.current) return;
       const nuevo = new maplibregl.Map({
         container: contenedor.current,
