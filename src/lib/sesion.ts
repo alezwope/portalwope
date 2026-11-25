@@ -34,6 +34,8 @@ export type Pagina = {
   especialidad: string | null;
   plan: string;
   cupo_gratis: number;
+  contacto_url?: string | null;
+  lugar?: string | null;
 };
 
 export const requerirPerfil = cache(async () => {

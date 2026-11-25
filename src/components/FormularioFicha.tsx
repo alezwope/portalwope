@@ -31,6 +31,8 @@ export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
   const [bio, setBio] = useState(pagina.bio ?? "");
   const [ciudad, setCiudad] = useState(pagina.ciudad ?? "");
   const [pais, setPais] = useState(pagina.pais ?? "");
+  const [lugar, setLugar] = useState(pagina.lugar ?? "");
+  const [contacto, setContacto] = useState(pagina.contacto_url ?? "");
   const [modalidades, setModalidades] = useState(pagina.modalidades);
   const [niveles, setNiveles] = useState(pagina.atiende_niveles);
   const [objetivos, setObjetivos] = useState(pagina.atiende_objetivos);
@@ -49,13 +51,15 @@ export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
         bio: bio.trim() || null,
         ciudad: ciudad.trim() || null,
         pais: pais.trim().toUpperCase() || null,
+        lugar: lugar.trim() || null,
+        contacto_url: contacto.trim() || null,
         modalidades,
         atiende_niveles: niveles,
         atiende_objetivos: objetivos,
       })
       .eq("id", pagina.id);
     setCargando(false);
-    if (error) setMsg({ ok: false, texto: "No pudimos guardar la ficha." });
+    if (error) setMsg({ ok: false, texto: error.message.includes("paginas_contacto_valido") ? "El contacto debe ser un enlace https de Instagram, Facebook, YouTube, WhatsApp o Telegram." : "No pudimos guardar la ficha." });
     else {
       setMsg({ ok: true, texto: "Ficha guardada ✓" });
       router.refresh();
@@ -90,6 +94,14 @@ export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
           <input className="campo uppercase" maxLength={2} value={pais} onChange={(e) => setPais(e.target.value)} />
         </label>
       </div>
+      <label className="grid gap-1 text-sm">
+        Dónde entrenas (parque o plaza, opcional)
+        <input className="campo" maxLength={120} value={lugar} onChange={(e) => setLugar(e.target.value)} placeholder="Ej. Parque Centenario, CABA" />
+      </label>
+      <label className="grid gap-1 text-sm">
+        Enlace de contacto (opcional)
+        <input className="campo" type="url" maxLength={200} value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder="Instagram, WhatsApp, YouTube, Facebook o Telegram" />
+      </label>
       <Casillas titulo="Modalidades" opciones={Object.entries(MODALIDADES)} valor={modalidades} cambiar={setModalidades} />
       <Casillas titulo="Niveles que entrenas" opciones={NIVELES.map((n) => [n.clave, n.nombre])} valor={niveles} cambiar={setNiveles} />
       <Casillas titulo="Objetivos con los que ayudas" opciones={Object.entries(OBJETIVOS)} valor={objetivos} cambiar={setObjetivos} />

@@ -11,7 +11,7 @@ async function cargar(slug: string) {
   const supabase = await crearClienteServidor();
   const { data } = await supabase
     .from("paginas")
-    .select("id, tipo, nombre, slug, bio, ciudad, pais, estado, modalidades, atiende_niveles, atiende_objetivos, especialidad, plan")
+    .select("id, tipo, nombre, slug, bio, ciudad, pais, estado, modalidades, atiende_niveles, atiende_objetivos, especialidad, plan, contacto_url, lugar")
     .eq("slug", slug)
     .maybeSingle();
   return { supabase, pagina: data as Pagina | null };
@@ -66,6 +66,15 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
         </header>
 
         {pagina.bio && <p className="tarjeta whitespace-pre-line">{pagina.bio}</p>}
+
+        {(pagina.lugar || pagina.contacto_url) && (
+          <section className="tarjeta flex flex-wrap items-center gap-3">
+            {pagina.lugar && <p><strong>Entrena en:</strong> {pagina.lugar}</p>}
+            {pagina.contacto_url && (
+              <a href={pagina.contacto_url} target="_blank" rel="noopener noreferrer nofollow ugc" className="btn btn-borde !py-1.5">Contactar por sus redes</a>
+            )}
+          </section>
+        )}
 
         {(pagina.modalidades.length > 0 || pagina.atiende_niveles.length > 0 || pagina.atiende_objetivos.length > 0) && (
           <section className="tarjeta grid gap-3">
