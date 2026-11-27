@@ -56,13 +56,13 @@ export default async function Puerta(props: PageProps<"/">) {
               width={640}
               height={640}
               priority
-              className="logo-fundido h-auto w-56 drop-shadow-[0_0_40px_rgba(255,85,0,0.25)] md:w-80"
+              className="logo-fundido h-auto w-36 drop-shadow-[0_0_40px_rgba(255,85,0,0.25)] md:w-80"
             />
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-dorado">{t["marca.lema"]}</p>
             <h1 className="text-3xl leading-tight md:text-5xl">
               <span className="texto-fuego">{t["puerta.titulo"]}</span>
             </h1>
-            <p className="max-w-md text-lg text-suave">{t["puerta.texto"]}</p>
+            <p className="max-w-md text-suave md:text-lg">{t["puerta.texto"]}</p>
             <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
               {MOSTRAR_VITRINA && (
                 <Link href="/conoce" className="rounded-full border border-lava/50 bg-lava/10 px-4 py-1.5 text-sm font-bold text-lava">
@@ -104,9 +104,9 @@ export default async function Puerta(props: PageProps<"/">) {
         <section className="mx-auto max-w-6xl px-4 py-6">
           <ol className="grid grid-cols-5 gap-2">
             {NIVELES.map((nv) => (
-              <li key={nv.clave} className="tarjeta !p-3 text-center" style={{ borderColor: nv.color }}>
+              <li key={nv.clave} className="tarjeta !px-1 !py-3 text-center" style={{ borderColor: nv.color }}>
                 <p className="num text-xs text-suave">{nv.n}</p>
-                <p className="titulo text-sm sm:text-lg" style={{ color: nv.color }}>{nv.nombre}</p>
+                <p className="titulo truncate text-[9px] tracking-normal sm:text-lg" style={{ color: nv.color }}>{nv.nombre}</p>
               </li>
             ))}
           </ol>

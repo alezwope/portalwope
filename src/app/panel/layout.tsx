@@ -54,7 +54,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
           <Image src="/brand/isotipo-96.png" alt="" width={44} height={44} priority className="logo-fundido" />
           <div className="min-w-0">
             <Image src="/brand/logotipo.png" alt="UniBars" width={130} height={28} priority className="logo-fundido h-6 w-auto" />
-            <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-suave">{t["marca.lema"]}</p>
+            <p className="mt-0.5 whitespace-nowrap text-[10px] uppercase tracking-wider text-suave">{t["marca.lema"]}</p>
           </div>
         </Link>
         <div className="flex-1 overflow-y-auto p-3">

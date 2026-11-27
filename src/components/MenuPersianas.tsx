@@ -59,7 +59,7 @@ export default function MenuPersianas({ alias, entrenador, alNavegar }: { alias:
                         }`}
                       >
                         <span>{t[i.texto]}</span>
-                        {i.pronto && <span className="rounded-full border border-borde px-1.5 text-[10px] uppercase tracking-wide">{t["comun.pronto"]}</span>}
+                        {i.pronto && <span className="shrink-0 text-xs opacity-70" title={t["comun.pronto"]} aria-label={t["comun.pronto"]}>⏳</span>}
                       </Link>
                     </li>
                   );
