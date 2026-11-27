@@ -49,7 +49,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
       <SincronizarPreferencias idioma={esIdioma(p.idioma) ? p.idioma : "es"} tema={p.tema ?? "oscuro"} />
 
       {/* Barra lateral de computadora (280 px) */}
-      <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-borde bg-bg/80 backdrop-blur md:flex">
+      <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-borde bg-bg md:flex">
         <Link href="/panel" className="flex items-center gap-3 border-b border-borde px-4 py-4">
           <Image src="/brand/isotipo-96.png" alt="" width={44} height={44} priority className="logo-fundido" />
           <div className="min-w-0">
@@ -73,7 +73,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Barra superior */}
-        <header className="sticky top-0 z-20 border-b border-borde bg-bg/85 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-borde bg-bg">
           <div className="flex items-center justify-between gap-2 px-3 py-2 md:px-6">
             <div className="flex min-w-0 items-center gap-2">
               <Cajon alias={alias} entrenador={!!entrenador} />

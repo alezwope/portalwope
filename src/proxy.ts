@@ -21,9 +21,9 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims verifica el token localmente (sin viajar a Supabase en cada visita); solo renueva cuando vence.
+  const { data: claims } = await supabase.auth.getClaims();
+  const user = claims?.claims?.sub ? { id: claims.claims.sub } : null;
 
   const ruta = request.nextUrl.pathname;
   const esPrivada = RUTAS_PRIVADAS.some((r) => ruta === r || ruta.startsWith(r + "/"));

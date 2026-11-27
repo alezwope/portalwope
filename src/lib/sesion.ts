@@ -40,12 +40,12 @@ export type Pagina = {
 
 export const requerirPerfil = cache(async () => {
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/entrar");
+  const { data: claims } = await supabase.auth.getClaims();
+  const uid = claims?.claims?.sub;
+  if (!uid) redirect("/entrar");
+  const user = { id: uid };
 
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
   if (!data) redirect("/entrar");
   if (!data.onboarding_completo) redirect("/onboarding");
 

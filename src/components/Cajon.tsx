@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import MenuPersianas from "@/components/MenuPersianas";
 import { useTextos } from "@/components/Idioma";
@@ -16,7 +17,11 @@ export default function Cajon({ alias, entrenador }: { alias: string; entrenador
     if (!abierto) return;
     const k = (e: KeyboardEvent) => e.key === "Escape" && setAbierto(false);
     window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", k);
+      document.body.style.overflow = "";
+    };
   }, [abierto]);
 
   return (
@@ -24,8 +29,9 @@ export default function Cajon({ alias, entrenador }: { alias: string; entrenador
       <button type="button" onClick={() => setAbierto(true)} className="rounded-lg border border-borde bg-card px-2.5 py-1.5 md:hidden" aria-label={t["app.menu"]} aria-expanded={abierto}>
         ☰
       </button>
-      {abierto && (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label={t["app.menu"]}>
+      {/* Portal al <body>: la cabecera usa backdrop-filter y eso encerraría el cajón en su franja. */}
+      {abierto && createPortal(
+        <div className="fixed inset-0 z-[70] md:hidden" role="dialog" aria-modal="true" aria-label={t["app.menu"]}>
           <button type="button" className="absolute inset-0 bg-black/60" aria-label={t["comun.cerrar"]} onClick={() => setAbierto(false)} />
           <aside key={ruta} className="absolute inset-y-0 left-0 flex w-[82%] max-w-xs flex-col gap-3 overflow-y-auto border-r border-borde bg-bg p-3">
             <div className="flex items-center justify-between">
@@ -37,7 +43,8 @@ export default function Cajon({ alias, entrenador }: { alias: string; entrenador
             </div>
             <MenuPersianas alias={alias} entrenador={entrenador} alNavegar={() => setAbierto(false)} />
           </aside>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

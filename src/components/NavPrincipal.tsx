@@ -31,7 +31,7 @@ export default function NavPrincipal() {
   const activo = (e: Enlace) => (e.exacto ? ruta === e.href : ruta === e.href || ruta.startsWith(e.href + "/"));
 
   return (
-    <nav aria-label={t["app.menu"]} className="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+    <nav aria-label={t["app.menu"]} className="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-bg pb-[env(safe-area-inset-bottom)] md:hidden">
       <ul className={`mx-auto grid max-w-lg ${modoEntrenador ? "grid-cols-4" : "grid-cols-5"}`}>
         {enlaces.map((e) => (
           <li key={e.href}>
