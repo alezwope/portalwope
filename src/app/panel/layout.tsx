@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BotonComentarios from "@/components/BotonComentarios";
 import Cabecera from "@/components/Cabecera";
 import NavPrincipal from "@/components/NavPrincipal";
 import SelectorModo from "@/components/SelectorModo";
@@ -14,10 +15,17 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
     .select("id", { count: "exact", head: true })
     .eq("leida", false);
 
+  const { data: tiposCat } = await supabase
+    .from("catalogo_items").select("clave, datos").eq("catalogo", "tipos_comentario").eq("activo", true).order("orden");
+  const tipos = (tiposCat ?? []).map((t) => ({ clave: t.clave, nombre: (t.datos as { es?: string }).es ?? t.clave }));
+
   return (
     <>
       <Cabecera>
         <SelectorModo alias={perfil.alias ?? "yo"} entrenador={entrenador?.nombre ?? null} />
+        <Link href="/panel/sugerencias" className="rounded-full border border-borde px-2.5 py-1.5" aria-label="Sugerencias">
+          <span aria-hidden>💡</span>
+        </Link>
         <Link
           href="/panel/notificaciones"
           className="relative rounded-full border border-borde px-2.5 py-1.5"
@@ -33,6 +41,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
       </Cabecera>
       <NavPrincipal />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-10">{children}</main>
+      <BotonComentarios tipos={tipos} />
     </>
   );
 }

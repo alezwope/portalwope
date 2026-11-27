@@ -89,7 +89,7 @@ export default async function PanelInicio() {
         ) : (
           <Link href="/panel/perfil#paginas" className="tarjeta hover:!border-lava">
             <h2 className="text-xl text-lava">¿Eres entrenador?</h2>
-            <p className="text-suave">Crea tu página de entrenador: 10 alumnos gratis.</p>
+            <p className="text-suave">Crea tu página de entrenador: hasta 100 alumnos gratis.</p>
           </Link>
         )}
       </div>

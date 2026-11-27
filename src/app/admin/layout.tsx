@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Consola" };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { equipo } = await requerirEquipo();
-  const items = SECCIONES_ADMIN.filter((s) => !s.permiso || puede(equipo, s.permiso));
+  const items = SECCIONES_ADMIN.filter((s) => (s.soloSuper ? equipo.esSuper : !s.permiso || puede(equipo, s.permiso)));
 
   return (
     <>

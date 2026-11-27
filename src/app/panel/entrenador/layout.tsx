@@ -12,7 +12,8 @@ export const metadata: Metadata = {
 export default async function EntrenadorLayout({ children }: LayoutProps<"/panel/entrenador">) {
   const { supabase, pagina } = await requerirEntrenador();
   const { data: activos } = await supabase.rpc("alumnos_activos", { p_pagina: pagina.id });
-  const cupo = pagina.plan === "pro" ? null : pagina.cupo_gratis;
+  const { data: limite } = await supabase.rpc("limite_alumnos", { p_pagina: pagina.id });
+  const cupo = (limite ?? null) as number | null;
 
   return (
     <div className="grid gap-6">

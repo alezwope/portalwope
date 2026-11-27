@@ -93,7 +93,7 @@ export default async function Inicio() {
               <h2 className="text-2xl mb-2">¿Eres entrenador?</h2>
               <p className="text-suave">
                 Crea tu cuenta y activa tu página de entrenador: ficha pública, solicitudes con el perfil de cada persona, escuela e
-                invitaciones por link o QR. Tus primeros 10 alumnos son gratis.
+                invitaciones por link o QR. Hasta 100 alumnos gratis.
               </p>
             </div>
             <Link href="/entrar" className="btn btn-lava md:justify-self-end">Empezar gratis</Link>

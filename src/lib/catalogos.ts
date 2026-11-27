@@ -23,7 +23,7 @@ export const MODALIDADES = { presencial: "Presencial", distancia: "A distancia",
 export const TIPOS_PAGINA = {
   entrenador: {
     nombre: "Entrenador",
-    resumen: "Tu escuela: tu nombre o el que elijas, tus sedes en el mapa, tus alumnos e invitaciones. 10 alumnos gratis.",
+    resumen: "Tu escuela: tu nombre o el que elijas, tus sedes en el mapa, tus alumnos e invitaciones. Hasta 100 alumnos gratis.",
     icono: "🏋️",
   },
   tienda: {

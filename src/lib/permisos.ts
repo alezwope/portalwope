@@ -26,9 +26,27 @@ export async function requerirEquipo(permiso?: string) {
 }
 
 /** Secciones de la consola y el permiso que pide cada una. */
-export const SECCIONES_ADMIN: { href: string; nombre: string; permiso?: string }[] = [
+export const SECCIONES_ADMIN: { href: string; nombre: string; permiso?: string; soloSuper?: boolean }[] = [
   { href: "/admin", nombre: "Resumen" },
+  { href: "/admin/comentarios", nombre: "Comentarios", permiso: "comentarios" },
+  { href: "/admin/sugerencias", nombre: "Sugerencias", permiso: "sugerencias" },
   { href: "/admin/insignias", nombre: "Insignias", permiso: "insignias" },
   { href: "/admin/modulos", nombre: "Módulos", permiso: "modulos" },
   { href: "/admin/ajustes", nombre: "Ajustes", permiso: "ajustes" },
+  { href: "/admin/auditoria", nombre: "Historial", permiso: "auditoria" },
+  { href: "/admin/equipo", nombre: "Equipo", soloSuper: true },
 ];
+
+/** Permisos que se pueden dar a una persona del equipo. */
+export const PERMISOS_EQUIPO: Record<string, string> = {
+  personas: "Ver personas y resumen",
+  moderar: "Moderar reportes y páginas",
+  comentarios: "Comentarios de testers",
+  sugerencias: "Sugerencias y votaciones",
+  insignias: "Insignias y planes",
+  modulos: "Módulos",
+  ajustes: "Ajustes",
+  catalogos: "Catálogos",
+  textos: "Textos y traducciones",
+  auditoria: "Ver el historial",
+};
