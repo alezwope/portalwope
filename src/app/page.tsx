@@ -1,125 +1,133 @@
 import Image from "next/image";
 import Link from "next/link";
-import Cabecera from "@/components/Cabecera";
-import { obtenerMarca } from "@/lib/marca";
-import { NIVELES } from "@/lib/catalogos";
 import { createClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
+import Cabecera from "@/components/Cabecera";
+import FormularioAcceso from "@/components/FormularioAcceso";
+import { NIVELES } from "@/lib/catalogos";
+import { textos } from "@/lib/i18n/servidor";
 
-export const revalidate = 300;
+/** La vitrina «Conoce UniBars» queda oculta hasta el lanzamiento (decisión de Alez). */
+const MOSTRAR_VITRINA = false;
 
-const QUE_CONSIGUES = [
-  { icono: "🗺️", titulo: "Parques cerca de ti", texto: "El mapa de parques de calistenia más completo, con check-in y cuánta gente está entrenando." },
-  { icono: "💪", titulo: "CalisteniaGO", texto: "Un programa guiado nivel por nivel, de Génesis a Titán, a tu ritmo." },
-  { icono: "🏋️", titulo: "Tu entrenador", texto: "Encuentra entrenador o únete al tuyo con un link. Tú decides qué datos compartes." },
-  { icono: "🤝", titulo: "Tu comunidad", texto: "Logros reales, amigos y compañeros de barra. Sin ruido." },
-];
+const contar = unstable_cache(
+  async () => {
+    try {
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+      const [{ count: parques }, { count: entrenadores }] = await Promise.all([
+        sb.from("parques").select("id", { count: "exact", head: true }),
+        sb.from("paginas").select("id", { count: "exact", head: true }).eq("tipo", "entrenador").eq("estado", "activa"),
+      ]);
+      return { parques: parques ?? 0, entrenadores: entrenadores ?? 0 };
+    } catch {
+      return { parques: 0, entrenadores: 0 };
+    }
+  },
+  ["contadores-puerta"],
+  { revalidate: 600 },
+);
 
-async function contar() {
-  try {
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-    const [{ count: parques }, { count: entrenadores }] = await Promise.all([
-      supabase.from("parques").select("id", { count: "exact", head: true }),
-      supabase.from("paginas").select("id", { count: "exact", head: true }).eq("tipo", "entrenador").eq("estado", "activa"),
-    ]);
-    return { parques: parques ?? 0, entrenadores: entrenadores ?? 0 };
-  } catch {
-    return { parques: 0, entrenadores: 0 };
-  }
-}
-
-export default async function Inicio() {
-  const [marca, n] = await Promise.all([obtenerMarca(), contar()]);
+export default async function Puerta(props: PageProps<"/">) {
+  const sp = await props.searchParams;
+  const [{ t, idioma }, n] = await Promise.all([textos(), contar()]);
+  const BENEFICIOS = [
+    ["🗺️", "puerta.b1t", "puerta.b1"],
+    ["🔥", "puerta.b2t", "puerta.b2"],
+    ["🏛️", "puerta.b3t", "puerta.b3"],
+    ["🤝", "puerta.b4t", "puerta.b4"],
+  ] as const;
+  const PRINCIPIOS = [
+    ["puerta.p1t", "puerta.p1"],
+    ["puerta.p2t", "puerta.p2"],
+    ["puerta.p3t", "puerta.p3"],
+  ] as const;
 
   return (
     <>
-      <Cabecera>
-        <Link href="/entrar" className="btn btn-lava">Entrar</Link>
-      </Cabecera>
+      <Cabecera />
 
       <main className="flex-1">
-        <section className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-12 md:grid-cols-2">
-          <div className="grid gap-5">
-            <p className="text-dorado font-bold tracking-widest text-sm uppercase">{marca.lema}</p>
-            <h1 className="text-4xl md:text-5xl leading-tight">La red social de la calistenia.</h1>
-            <p className="text-suave text-lg">
-              Encuentra parques, entrena nivel por nivel y conecta con entrenadores y compañeros de barra. Gratis.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/entrar" className="btn btn-lava">Crear mi cuenta gratis</Link>
-              <a href="#que-consigues" className="btn btn-borde">Qué consigues</a>
+        {/* Entrada: como Facebook, la marca a la izquierda y el acceso a la derecha */}
+        <section className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-[1.1fr_1fr] md:py-14">
+          <div className="grid justify-items-center gap-4 text-center md:justify-items-start md:text-left">
+            <Image
+              src="/brand/isologo-640.webp"
+              alt="UniBars, el universo de las barras"
+              width={640}
+              height={640}
+              priority
+              className="logo-fundido h-auto w-56 drop-shadow-[0_0_40px_rgba(255,85,0,0.25)] md:w-80"
+            />
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-dorado">{t["marca.lema"]}</p>
+            <h1 className="text-3xl leading-tight md:text-5xl">
+              <span className="texto-fuego">{t["puerta.titulo"]}</span>
+            </h1>
+            <p className="max-w-md text-lg text-suave">{t["puerta.texto"]}</p>
+            <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
+              {MOSTRAR_VITRINA && (
+                <Link href="/conoce" className="rounded-full border border-lava/50 bg-lava/10 px-4 py-1.5 text-sm font-bold text-lava">
+                  ✨ {t["puerta.conoce"]}
+                </Link>
+              )}
+              <Link href="/mapa" className="text-sm text-suave underline hover:text-texto">
+                🗺️ {t["puerta.verMapa"]}
+              </Link>
             </div>
             {n.parques > 0 && (
               <p className="text-sm text-suave">
-                <Link href="/mapa" className="underline"><strong className="text-texto">{n.parques.toLocaleString("es")}</strong> parques ya en el mapa</Link>
-                {n.entrenadores > 0 && <> · <strong className="text-texto">{n.entrenadores}</strong> entrenadores</>}
+                <strong className="num text-texto">{n.parques.toLocaleString(idioma)}</strong> {t["puerta.parques"]}
+                {n.entrenadores > 0 && (
+                  <> · <strong className="num text-texto">{n.entrenadores.toLocaleString(idioma)}</strong> {t["puerta.entrenadores"]}</>
+                )}
               </p>
             )}
           </div>
-          <div className="flex justify-center">
-            <Image src="/brand/isologo.webp" alt="UniBars, el universo de las barras" width={520} height={520} priority className="h-auto w-full max-w-md" />
+
+          <div className="flex flex-col items-center gap-3">
+            <FormularioAcceso siguiente="/panel" modoInicial={sp.crear ? "crear" : "entrar"} />
+            <p className="text-sm text-suave">{t["marca.by"]}</p>
           </div>
         </section>
 
-        <section id="que-consigues" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-10">
-          <h2 className="text-3xl mb-6">Qué consigues aquí</h2>
+        <section className="mx-auto max-w-6xl px-4 py-8">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {QUE_CONSIGUES.map((c) => (
-              <article key={c.titulo} className="tarjeta">
-                <p className="text-3xl" aria-hidden>{c.icono}</p>
-                <h3 className="text-xl text-lava my-2">{c.titulo}</h3>
-                <p className="text-suave">{c.texto}</p>
+            {BENEFICIOS.map(([icono, titulo, texto]) => (
+              <article key={titulo} className="tarjeta">
+                <p className="text-3xl" aria-hidden>{icono}</p>
+                <h2 className="my-2 text-lg text-lava">{t[titulo]}</h2>
+                <p className="text-sm text-suave">{t[texto]}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 py-10">
-          <h2 className="text-3xl mb-2">Cinco niveles, un camino</h2>
-          <p className="text-suave mb-6">Tu progreso se mide a tu manera: sin presión y sin castigos.</p>
-          <ol className="grid gap-3 sm:grid-cols-5">
+        <section className="mx-auto max-w-6xl px-4 py-6">
+          <ol className="grid grid-cols-5 gap-2">
             {NIVELES.map((nv) => (
-              <li key={nv.clave} className="tarjeta text-center" style={{ borderColor: nv.color }}>
-                <p className="text-sm text-suave">Nivel {nv.n}</p>
-                <p className="titulo text-xl" style={{ color: nv.color }}>{nv.nombre}</p>
-                <p className="text-sm text-suave">{nv.etapa}</p>
+              <li key={nv.clave} className="tarjeta !p-3 text-center" style={{ borderColor: nv.color }}>
+                <p className="num text-xs text-suave">{nv.n}</p>
+                <p className="titulo text-sm sm:text-lg" style={{ color: nv.color }}>{nv.nombre}</p>
               </li>
             ))}
           </ol>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 py-10">
-          <div className="tarjeta grid items-center gap-4 md:grid-cols-[2fr_1fr]">
-            <div>
-              <h2 className="text-2xl mb-2">¿Eres entrenador?</h2>
-              <p className="text-suave">
-                Crea tu cuenta y activa tu página de entrenador: ficha pública, solicitudes con el perfil de cada persona, escuela e
-                invitaciones por link o QR. Hasta 100 alumnos gratis.
-              </p>
-            </div>
-            <Link href="/entrar" className="btn btn-lava md:justify-self-end">Empezar gratis</Link>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-4 py-10">
-          <div className="tarjeta grid gap-3 md:grid-cols-3">
-            {[
-              ["Hecha para entrenar", "No buscamos que pases horas aquí: entras, tienes lo que necesitas y vas a la barra."],
-              ["Tus datos son tuyos", "Tú decides qué ve tu entrenador y puedes cortar el acceso cuando quieras."],
-              ["Mérito, no dinero", "Nadie compra su lugar en las búsquedas: se gana con buenas reseñas y alumnos ayudados."],
-            ].map(([t, d]) => (
-              <div key={t}>
-                <h3 className="text-xl text-dorado mb-1">{t}</h3>
-                <p className="text-suave">{d}</p>
+        <section className="mx-auto max-w-6xl px-4 py-8">
+          <div className="tarjeta grid gap-5 md:grid-cols-3">
+            {PRINCIPIOS.map(([titulo, texto]) => (
+              <div key={titulo}>
+                <h2 className="mb-1 text-lg text-dorado">{t[titulo]}</h2>
+                <p className="text-sm text-suave">{t[texto]}</p>
               </div>
             ))}
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-borde py-6 text-center text-sm text-suave">
-        © {new Date().getFullYear()} {marca.nombre} · WOPE Escuela de Calistenia · Solo para mayores de 18 años.
+      <footer className="border-t border-borde py-6 text-center text-xs text-suave">
+        © {new Date().getFullYear()} UniBars · {t["marca.by"]} · {t["comun.mayores18"]}
         <br />
-        Datos de parques © colaboradores de OpenStreetMap (ODbL) y fuentes oficiales.
+        {t["comun.osm"]}
       </footer>
     </>
   );

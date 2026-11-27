@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/cinzel";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
+import { ProveedorIdioma } from "@/components/Idioma";
+import { textos } from "@/lib/i18n/servidor";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
@@ -17,18 +22,26 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = { themeColor: "#0D0B0A" };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#09090B" },
+    { media: "(prefers-color-scheme: light)", color: "#F8F7F4" },
+  ],
+};
 
-// Aplica el tema guardado antes de pintar para evitar el parpadeo.
+// Aplica el tema guardado antes de pintar para evitar el parpadeo. Oscuro por defecto, como la plantilla.
 const SCRIPT_TEMA = `try{var t=localStorage.getItem('unibars-tema');if(t==='claro'){document.documentElement.dataset.tema='claro'}}catch(e){}`;
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const { idioma, t } = await textos();
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang={idioma} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
-      <body className="min-h-screen flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col">
+        <ProveedorIdioma idioma={idioma} t={t}>{children}</ProveedorIdioma>
+      </body>
     </html>
   );
 }

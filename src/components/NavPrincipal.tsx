@@ -2,47 +2,46 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTextos } from "@/components/Idioma";
+import type { ClaveTexto } from "@/lib/i18n/diccionarios";
 
-type Enlace = { href: string; texto: string; icono: string; exacto?: boolean };
+type Enlace = { href: string; texto: ClaveTexto; icono: string; exacto?: boolean };
 
 const PERSONAL: Enlace[] = [
-  { href: "/panel", texto: "Inicio", icono: "🏠", exacto: true },
-  { href: "/panel/mapa", texto: "Mapa", icono: "🗺️" },
-  { href: "/panel/entrenar", texto: "Entrenar", icono: "💪" },
-  { href: "/panel/comunidad", texto: "Comunidad", icono: "🤝" },
-  { href: "/panel/perfil", texto: "Perfil", icono: "👤" },
+  { href: "/panel", texto: "barra.inicio", icono: "🔥", exacto: true },
+  { href: "/panel/mapa", texto: "barra.mapa", icono: "🗺️" },
+  { href: "/panel/entrenar", texto: "barra.entrenar", icono: "🎯" },
+  { href: "/panel/comunidad", texto: "barra.comunidad", icono: "🤝" },
+  { href: "/panel/perfil", texto: "barra.yo", icono: "👤" },
 ];
 
 const ENTRENADOR: Enlace[] = [
-  { href: "/panel/entrenador", texto: "Solicitudes", icono: "📥", exacto: true },
-  { href: "/panel/entrenador/alumnos", texto: "Alumnos", icono: "🧑‍🤝‍🧑" },
-  { href: "/panel/entrenador/escuela", texto: "Mi escuela", icono: "🏫" },
-  { href: "/panel/entrenador/invitar", texto: "Invitar", icono: "🔗" },
+  { href: "/panel/entrenador", texto: "ent.solicitudes", icono: "📥", exacto: true },
+  { href: "/panel/entrenador/alumnos", texto: "ent.alumnos", icono: "🧑‍🤝‍🧑" },
+  { href: "/panel/entrenador/escuela", texto: "ent.escuela", icono: "🏛️" },
+  { href: "/panel/entrenador/invitar", texto: "ent.invitar", icono: "🔗" },
 ];
 
+/** Barra inferior del teléfono. En modo entrenador muestra las herramientas de la escuela. */
 export default function NavPrincipal() {
+  const { t } = useTextos();
   const ruta = usePathname();
   const modoEntrenador = ruta.startsWith("/panel/entrenador");
   const enlaces = modoEntrenador ? ENTRENADOR : PERSONAL;
   const activo = (e: Enlace) => (e.exacto ? ruta === e.href : ruta === e.href || ruta.startsWith(e.href + "/"));
 
   return (
-    <nav
-      aria-label={modoEntrenador ? "Menú de entrenador" : "Menú principal"}
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-bg/95 backdrop-blur md:static md:border-b md:border-t-0"
-    >
-      <ul className="mx-auto grid max-w-3xl grid-cols-5 md:flex md:max-w-6xl md:gap-1 md:px-4 md:py-2">
+    <nav aria-label={t["app.menu"]} className="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <ul className={`mx-auto grid max-w-lg ${modoEntrenador ? "grid-cols-4" : "grid-cols-5"}`}>
         {enlaces.map((e) => (
           <li key={e.href}>
             <Link
               href={e.href}
               aria-current={activo(e) ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 px-1 py-2 text-xs md:flex-row md:gap-2 md:rounded-lg md:px-3 md:text-sm ${
-                activo(e) ? "text-lava font-bold md:bg-card" : "text-suave hover:text-texto"
-              }`}
+              className={`flex flex-col items-center gap-0.5 px-1 py-2 text-[11px] ${activo(e) ? "font-bold text-lava" : "text-suave"}`}
             >
-              <span aria-hidden className="text-lg md:text-base">{e.icono}</span>
-              {e.texto}
+              <span aria-hidden className={`text-lg ${activo(e) ? "" : "grayscale-[60%]"}`}>{e.icono}</span>
+              {t[e.texto]}
             </Link>
           </li>
         ))}

@@ -269,7 +269,6 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
     const m = mapa.current;
     if (!listo.current || !m) return;
     m.setLayoutProperty("escuelas-pin", "visibility", escuelasOn ? "visible" : "none");
-    if (!escuelasOn) setEscuelaSel(null);
   }, [escuelasOn, escuelas]);
   useEffect(() => {
     if (!listo.current || !mapa.current) return;
@@ -362,7 +361,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
         </div>
         <button type="button" onClick={cercaDeMi} className="btn btn-lava">📍 Cerca de mí</button>
         <button type="button" aria-pressed={calorOn} onClick={() => setCalorOn((v) => !v)} className={`btn ${calorOn ? "btn-dorado" : "btn-borde"}`}>🔥 Calor</button>
-        <button type="button" aria-pressed={escuelasOn} onClick={() => setEscuelasOn((v) => !v)} className={`btn ${escuelasOn ? "btn-dorado" : "btn-borde"}`}>🏫 Escuelas</button>
+        <button type="button" aria-pressed={escuelasOn} onClick={() => { if (escuelasOn) setEscuelaSel(null); setEscuelasOn(!escuelasOn); }} className={`btn ${escuelasOn ? "btn-dorado" : "btn-borde"}`}>🏫 Escuelas</button>
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Tipos de parque">

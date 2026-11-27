@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
   };
 
   if (!user && esPrivada) return redirigir("/entrar", { siguiente: ruta });
-  if (user && ruta === "/entrar") return redirigir("/panel");
+  if (user && (ruta === "/entrar" || ruta === "/")) return redirigir("/panel");
 
   return respuesta;
 }

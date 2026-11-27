@@ -10,7 +10,9 @@ import { ESTADOS_PAGINA, TIPOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
 
 export const metadata: Metadata = { title: "Perfil" };
 
-export default async function PaginaPerfil() {
+export default async function PaginaPerfil(props: PageProps<"/panel/perfil">) {
+  const sp = await props.searchParams;
+  const crear = typeof sp.crear === "string" ? sp.crear : null;
   const { supabase, perfil } = await requerirPerfil();
   const paginas = await misPaginas();
   const [{ data: medidas }, { data: salud }, { data: marcas }, { data: bloqueados }] = await Promise.all([
@@ -54,7 +56,7 @@ export default async function PaginaPerfil() {
           </div>
         ))}
         <div className="grid gap-3 sm:grid-cols-2">
-          {faltan.map((t) => <CrearPagina key={t} tipo={t} />)}
+          {faltan.map((t) => <CrearPagina key={t} tipo={t} abiertoInicial={crear === t} />)}
         </div>
       </section>
 

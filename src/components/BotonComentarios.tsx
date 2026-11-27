@@ -25,7 +25,7 @@ export default function BotonComentarios({ tipos }: { tipos: { clave: string; no
   }
 
   return (
-    <div className="fixed bottom-20 right-3 z-40 md:bottom-6">
+    <div className="fixed bottom-20 left-3 z-40 md:bottom-6 md:left-auto md:right-6">
       {abierto && (
         <div className="tarjeta mb-2 grid w-72 gap-2 shadow-lg" role="dialog" aria-label="Enviar comentario">
           <select className="campo !py-1" value={tipo} onChange={(e) => setTipo(e.target.value)} aria-label="Tipo">

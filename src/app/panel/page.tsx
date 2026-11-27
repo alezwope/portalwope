@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { misPaginas, requerirPerfil } from "@/lib/sesion";
+import IntencionPagina from "@/components/IntencionPagina";
 import { OBJETIVOS, nivelDe, type Objetivo } from "@/lib/catalogos";
 import Feed from "@/components/Feed";
 import type { ItemFeed } from "@/lib/social";
@@ -28,6 +29,7 @@ export default async function PanelInicio() {
 
   return (
     <div className="grid gap-6">
+      <IntencionPagina tiposQueTiene={paginas.map((p) => p.tipo)} />
       <header>
         <h1 className="text-3xl">¡Hola, @{perfil.alias}!</h1>
         <p className="text-suave">

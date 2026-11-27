@@ -1,63 +1,113 @@
 @import "tailwindcss";
 
-/* Marca UniBars: metal fundido y lava cósmica. Oscuro por defecto. */
+/* Piel UniBars (plantilla definitiva): obsidiana + magma de noche, caliza + magma de día.
+   Los nombres de variables se mantienen para no romper ninguna pantalla. */
 :root {
-  --bg: #0d0b0a;
-  --card: #1c1815;
-  --borde: #33291f;
-  --lava: #e8540c;
-  --lava-claro: #ff5a1f;
-  --dorado: #d4a017;
-  --texto: #f0e6d8;
-  --suave: #b9a994;
+  --bg: #09090b;          /* obsidiana */
+  --fondo: #050507;       /* escenario detrás de todo */
+  --card: #121216;
+  --card-hover: #1a1a21;
+  --borde: #27272a;
+  --lava: #ff5500;        /* magma */
+  --lava-claro: #ff8c00;  /* ámbar solar */
+  --dorado: #ffb800;      /* oro fénix */
+  --peligro: #ef233c;
+  --ok: #10b981;
+  --texto: #f4f4f5;
+  --suave: #a1a1aa;
+  --brillo-1: rgba(255, 85, 0, 0.09);
+  --brillo-2: rgba(255, 184, 0, 0.07);
+  --punto: rgba(255, 255, 255, 0.04);
   color-scheme: dark;
 }
 
 [data-tema="claro"] {
-  --bg: #f5efe4;
-  --card: #e8dcc8;
-  --borde: #cdbb9f;
-  --lava: #d14a0a;
-  --lava-claro: #e8540c;
-  --dorado: #b8860b;
-  --texto: #1c1815;
-  --suave: #5e5143;
+  --bg: #f8f7f4;          /* caliza */
+  --fondo: #efece6;
+  --card: #ffffff;
+  --card-hover: #f1efea;
+  --borde: #e4e2dc;
+  --lava: #c93f00;        /* magma oscurecido para que el texto se lea (contraste AA) */
+  --lava-claro: #e05a00;
+  --dorado: #b45309;
+  --peligro: #c81e33;
+  --ok: #047857;
+  --texto: #18181b;
+  --suave: #52525b;
+  --brillo-1: rgba(255, 85, 0, 0.07);
+  --brillo-2: rgba(255, 184, 0, 0.05);
+  --punto: rgba(17, 17, 20, 0.05);
   color-scheme: light;
 }
 
 @theme inline {
   --color-bg: var(--bg);
+  --color-fondo: var(--fondo);
   --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
   --color-borde: var(--borde);
   --color-lava: var(--lava);
   --color-lava-claro: var(--lava-claro);
   --color-dorado: var(--dorado);
+  --color-peligro: var(--peligro);
+  --color-ok: var(--ok);
   --color-texto: var(--texto);
   --color-suave: var(--suave);
-  --font-titulo: Rockwell, "Roboto Slab", "Arvo", "Rockwell Extra Bold", Georgia, serif;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-titulo: "Cinzel Variable", Cinzel, Georgia, serif;
+  --font-sans: "Inter Variable", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 }
 
 html {
-  scrollbar-color: var(--lava) var(--bg);
+  scrollbar-color: var(--borde) var(--bg);
 }
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--lava);
-  border-radius: 6px;
+  background: var(--borde);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff5500;
 }
 
 body {
-  background: var(--bg);
   color: var(--texto);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  background-color: var(--fondo);
+  background-image:
+    radial-gradient(circle at 15% 12%, var(--brillo-1) 0%, transparent 42%),
+    radial-gradient(circle at 85% 88%, var(--brillo-2) 0%, transparent 45%),
+    radial-gradient(var(--punto) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 24px 24px;
+  background-attachment: fixed;
+}
+
+/* Números (repeticiones, segundos, contadores) en mono, como la plantilla */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.texto-fuego {
+  background: linear-gradient(135deg, #ff5500 0%, #ff8c00 50%, #ffb800 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Los logos oficiales tienen fondo negro: en oscuro se funden con la superficie */
+.logo-fundido {
+  mix-blend-mode: lighten;
+}
+[data-tema="claro"] .logo-fundido {
+  mix-blend-mode: normal;
 }
 
 h1,
@@ -65,8 +115,8 @@ h2,
 h3,
 .titulo {
   font-family: var(--font-titulo);
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 ::selection {
@@ -75,15 +125,16 @@ h3,
 }
 
 :focus-visible {
-  outline: 2px solid var(--dorado);
+  outline: 2px solid #ff8c00;
   outline-offset: 2px;
 }
 
 .tarjeta {
   background: var(--card);
   border: 1px solid var(--borde);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 1.25rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
 }
 
 .campo {
@@ -125,30 +176,36 @@ h3,
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* Botón fuego de la plantilla */
 .btn-lava {
-  background: linear-gradient(180deg, var(--lava-claro), var(--lava));
+  background: linear-gradient(135deg, #e84a00 0%, #ff7a00 55%, #ffa000 100%);
   color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 20px rgba(255, 85, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.btn-lava:hover {
+  box-shadow: 0 6px 26px rgba(255, 110, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 .btn-borde {
-  background: transparent;
+  background: var(--card);
   color: var(--texto);
   border-color: var(--borde);
 }
 .btn-dorado {
-  background: var(--dorado);
-  color: #1c1815;
+  background: #ffb800;
+  color: #18181b;
 }
 
 .aviso-error {
-  background: color-mix(in srgb, var(--lava) 14%, transparent);
-  border: 1px solid var(--lava);
+  background: color-mix(in srgb, var(--peligro) 12%, transparent);
+  border: 1px solid var(--peligro);
   border-radius: 10px;
   padding: 0.65rem 0.85rem;
   font-size: 0.92rem;
 }
 .aviso-ok {
-  background: color-mix(in srgb, var(--dorado) 16%, transparent);
-  border: 1px solid var(--dorado);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+  border: 1px solid var(--ok);
   border-radius: 10px;
   padding: 0.65rem 0.85rem;
   font-size: 0.92rem;

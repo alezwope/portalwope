@@ -6,9 +6,9 @@ import { crearCliente } from "@/lib/supabase/client";
 import { TIPOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
 import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
-export default function CrearPagina({ tipo }: { tipo: TipoPagina }) {
+export default function CrearPagina({ tipo, abiertoInicial = false }: { tipo: TipoPagina; abiertoInicial?: boolean }) {
   const router = useRouter();
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto] = useState(abiertoInicial);
   const [nombre, setNombre] = useState("");
   const [ub, setUb] = useState<Ubicacion>({ pais: "", ciudad: "" });
   const [especialidad, setEspecialidad] = useState("");

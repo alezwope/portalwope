@@ -46,7 +46,7 @@ export default async function Comunidad(props: PageProps<"/panel/comunidad">) {
       <h1 className="text-3xl">Comunidad</h1>
 
       {(mios ?? []).length > 0 && (
-        <section className="grid gap-3">
+        <section id="mis-entrenadores" className="grid scroll-mt-24 gap-3">
           <h2 className="text-2xl">Mis entrenadores</h2>
           <ul className="grid gap-3 md:grid-cols-2">
             {(mios ?? []).map((v) => {
@@ -67,7 +67,7 @@ export default async function Comunidad(props: PageProps<"/panel/comunidad">) {
 
       <Amigos inicial={(amigos ?? { amigos: [], recibidas: [], enviadas: [] }) as MisAmigos} />
 
-      <section className="grid gap-3">
+      <section id="buscar-entrenador" className="grid scroll-mt-24 gap-3">
         <h2 className="text-2xl">Encuentra entrenador</h2>
         <form className="flex flex-wrap gap-2" action="/panel/comunidad">
           <input className="campo max-w-sm" name="q" defaultValue={q} placeholder="Nombre o ciudad" aria-label="Buscar entrenador" />
