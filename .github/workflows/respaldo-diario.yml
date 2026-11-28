@@ -1,0 +1,43 @@
+# Respaldo diario de la base de UniBars (gratis, en GitHub Actions).
+# El archivo sale CIFRADO (el repositorio es público): sin BACKUP_CLAVE nadie puede abrirlo.
+# Necesita dos secretos en GitHub → Settings → Secrets and variables → Actions:
+#   SUPABASE_DB_URL  = cadena de conexión "Session pooler" de Supabase (con la contraseña de la base)
+#   BACKUP_CLAVE     = una frase larga que solo sepa Alez (guárdala: sin ella el respaldo no se abre)
+# Se conservan 30 días. Para restaurar: ver docs del proyecto (respaldos-unibars).
+name: Respaldo diario
+on:
+  schedule:
+    - cron: "17 7 * * *"   # 04:17 en Argentina
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    container: postgres:17
+    steps:
+      - name: Revisar secretos
+        id: s
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          K: ${{ secrets.BACKUP_CLAVE }}
+        run: |
+          if [ -z "$DB" ] || [ -z "$K" ]; then echo "Faltan secretos: no se hace respaldo."; echo "ok=no" >> "$GITHUB_OUTPUT"; else echo "ok=si" >> "$GITHUB_OUTPUT"; fi
+      - name: Volcar y cifrar
+        if: steps.s.outputs.ok == 'si'
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          K: ${{ secrets.BACKUP_CLAVE }}
+        run: |
+          set -eo pipefail
+          F="unibars-$(date -u +%Y%m%d-%H%M).dump"
+          pg_dump "$DB" --format=custom --no-owner --no-privileges --schema=public --schema=interno --schema=auth --schema=storage -f "$F"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$F" -out "$F.enc" -pass env:K
+          rm "$F"; ls -lh "$F.enc"; mkdir out; mv "$F.enc" out/
+      - name: Guardar
+        if: steps.s.outputs.ok == 'si'
+        uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-unibars
+          path: out/
+          retention-days: 30
