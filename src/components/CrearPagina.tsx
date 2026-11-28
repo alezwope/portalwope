@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTextos } from "@/components/Idioma";
 import { crearCliente } from "@/lib/supabase/client";
 import { TIPOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
 import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 export default function CrearPagina({ tipo, abiertoInicial = false }: { tipo: TipoPagina; abiertoInicial?: boolean }) {
   const router = useRouter();
+  const { t } = useTextos();
   const [abierto, setAbierto] = useState(abiertoInicial);
   const [nombre, setNombre] = useState("");
   const [ub, setUb] = useState<Ubicacion>({ pais: "", ciudad: "" });
@@ -19,7 +21,7 @@ export default function CrearPagina({ tipo, abiertoInicial = false }: { tipo: Ti
   async function crear(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (nombre.trim().length < 2) return setError("Escribe un nombre de al menos 2 caracteres.");
+    if (nombre.trim().length < 2) return setError(t["pag.errNombre"]);
     setCargando(true);
     const { error } = await crearCliente().rpc("crear_pagina", {
       p_tipo: tipo,
@@ -37,31 +39,31 @@ export default function CrearPagina({ tipo, abiertoInicial = false }: { tipo: Ti
   if (!abierto)
     return (
       <button type="button" onClick={() => setAbierto(true)} className="tarjeta grid gap-1 text-left hover:!border-lava">
-        <span className="font-bold">{info.icono} Crear página de {info.nombre}</span>
+        <span className="font-bold">{info.icono} {t["pag.crearDe"]} {info.nombre}</span>
         <span className="text-sm text-suave">{info.resumen}</span>
       </button>
     );
 
   return (
     <form onSubmit={crear} className="tarjeta grid gap-3">
-      <p className="font-bold">{info.icono} Nueva página de {info.nombre}</p>
+      <p className="font-bold">{info.icono} {t["pag.nuevaDe"]} {info.nombre}</p>
       <label className="grid gap-1 text-sm">
-        Nombre público
+        {t["pag.nombre"]}
         <input className="campo" required maxLength={60} value={nombre} onChange={(e) => setNombre(e.target.value)} autoFocus />
       </label>
       {tipo === "wellness" && (
         <label className="grid gap-1 text-sm">
-          Especialidad (ej.: nutrición, kinesiología)
+          {t["pag.especialidad"]}
           <input className="campo" maxLength={80} value={especialidad} onChange={(e) => setEspecialidad(e.target.value)} />
         </label>
       )}
       <SelectorUbicacion valor={ub} onCambio={setUb} />
-      {tipo === "wellness" && <p className="text-xs text-suave">Revisaremos tus credenciales antes de mostrar tu página.</p>}
-      {tipo === "tienda" && <p className="text-xs text-suave">El catálogo de productos llega en la fase del marketplace.</p>}
+      {tipo === "wellness" && <p className="text-xs text-suave">{t["pag.revisamos"]}</p>}
+      {tipo === "tienda" && <p className="text-xs text-suave">{t["pag.catalogo"]}</p>}
       {error && <p className="aviso-error" role="alert">{error}</p>}
       <div className="flex gap-2">
-        <button className="btn btn-lava" disabled={cargando}>{cargando ? "Creando…" : "Crear página"}</button>
-        <button type="button" className="btn btn-borde" onClick={() => setAbierto(false)}>Cancelar</button>
+        <button className="btn btn-lava" disabled={cargando}>{cargando ? t["pag.creando"] : t["pag.crear"]}</button>
+        <button type="button" className="btn btn-borde" onClick={() => setAbierto(false)}>{t["comun.cancelar"]}</button>
       </div>
     </form>
   );

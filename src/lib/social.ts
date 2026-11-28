@@ -22,13 +22,13 @@ export type PerfilPublico = {
   logros: { id: string; titulo: string; creado_en: string }[]; logros_visibles: boolean;
 };
 
-export function hace(fecha: string): string {
+export function hace(fecha: string, idioma: string = "es"): string {
   const s = Math.max(0, (Date.now() - new Date(fecha).getTime()) / 1000);
-  if (s < 60) return "ahora";
-  if (s < 3600) return `hace ${Math.floor(s / 60)} min`;
-  if (s < 86400) return `hace ${Math.floor(s / 3600)} h`;
-  const d = Math.floor(s / 86400);
-  return d === 1 ? "ayer" : `hace ${d} días`;
+  const rtf = new Intl.RelativeTimeFormat(idioma, { numeric: "auto" });
+  if (s < 60) return rtf.format(0, "second");
+  if (s < 3600) return rtf.format(-Math.floor(s / 60), "minute");
+  if (s < 86400) return rtf.format(-Math.floor(s / 3600), "hour");
+  return rtf.format(-Math.floor(s / 86400), "day");
 }
 
 export const MOTIVOS_REPORTE = ["Spam o publicidad", "Acoso o falta de respeto", "No es de calistenia", "Información falsa o peligrosa", "Otro"] as const;

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { crearCliente } from "@/lib/supabase/client";
 import { nivelDe } from "@/lib/catalogos";
 import { mensajeError, type MisAmigos, type Persona, type Relacion } from "@/lib/social";
+import { useTextos } from "@/components/Idioma";
 import Avatar from "@/components/Avatar";
 
 function Fila({ p, children }: { p: Persona; children?: React.ReactNode }) {
@@ -25,6 +26,7 @@ function Fila({ p, children }: { p: Persona; children?: React.ReactNode }) {
 
 export default function Amigos({ inicial }: { inicial: MisAmigos }) {
   const router = useRouter();
+  const { t } = useTextos();
   const [datos, setDatos] = useState(inicial);
   const [q, setQ] = useState("");
   const [resultados, setResultados] = useState<Persona[] | null>(null);
@@ -54,25 +56,25 @@ export default function Amigos({ inicial }: { inicial: MisAmigos }) {
 
   return (
     <section id="amigos" className="grid gap-4 scroll-mt-20">
-      <h2 className="text-2xl">Compañeros de barra</h2>
+      <h2 className="text-2xl">{t["amigos.titulo"]}</h2>
 
       <form onSubmit={buscar} className="flex flex-wrap gap-2">
-        <input className="campo max-w-sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Busca por alias (mín. 2 letras)" aria-label="Buscar personas por alias" />
-        <button className="btn btn-borde" disabled={q.trim().length < 2}>Buscar</button>
+        <input className="campo max-w-sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t["amigos.buscarPh"]} aria-label={t["amigos.buscarAria"]} />
+        <button className="btn btn-borde" disabled={q.trim().length < 2}>{t["comunidad.buscar"]}</button>
       </form>
       {msg && <p className={msg.ok ? "aviso-ok" : "aviso-error"} role="status">{msg.texto}</p>}
 
       {resultados && (
         resultados.length === 0 ? (
-          <p className="text-suave">No encontramos a nadie con ese alias.</p>
+          <p className="text-suave">{t["amigos.nadie"]}</p>
         ) : (
           <ul className="grid gap-2">
             {resultados.map((p) => (
               <Fila key={p.id} p={p}>
                 {yaRelacionados.has(p.id) ? (
-                  <span className="text-xs text-suave">Ya en tu lista</span>
+                  <span className="text-xs text-suave">{t["amigos.yaLista"]}</span>
                 ) : (
-                  <button className="btn btn-lava !py-1 text-sm" onClick={() => llamar("amistad_enviar", { p_destino: p.id }, "Solicitud enviada ✓")}>Agregar</button>
+                  <button className="btn btn-lava !py-1 text-sm" onClick={() => llamar("amistad_enviar", { p_destino: p.id }, t["amigos.enviada"])}>{t["amigos.agregar"]}</button>
                 )}
               </Fila>
             ))}
@@ -82,12 +84,12 @@ export default function Amigos({ inicial }: { inicial: MisAmigos }) {
 
       {datos.recibidas.length > 0 && (
         <div className="grid gap-2">
-          <h3 className="text-lg">Solicitudes para ti</h3>
+          <h3 className="text-lg">{t["amigos.paraTi"]}</h3>
           <ul className="grid gap-2">
             {datos.recibidas.map((r) => (
               <Fila key={r.amistad_id} p={r.persona}>
-                <button className="btn btn-lava !py-1 text-sm" onClick={() => llamar("amistad_resolver", { p_id: r.amistad_id, p_aceptar: true })}>Aceptar</button>
-                <button className="btn btn-borde !py-1 text-sm" onClick={() => llamar("amistad_resolver", { p_id: r.amistad_id, p_aceptar: false })}>Rechazar</button>
+                <button className="btn btn-lava !py-1 text-sm" onClick={() => llamar("amistad_resolver", { p_id: r.amistad_id, p_aceptar: true })}>{t["res.aceptar"]}</button>
+                <button className="btn btn-borde !py-1 text-sm" onClick={() => llamar("amistad_resolver", { p_id: r.amistad_id, p_aceptar: false })}>{t["res.rechazar"]}</button>
               </Fila>
             ))}
           </ul>
@@ -95,14 +97,14 @@ export default function Amigos({ inicial }: { inicial: MisAmigos }) {
       )}
 
       <div className="grid gap-2">
-        <h3 className="text-lg">Tus compañeros ({datos.amigos.length})</h3>
+        <h3 className="text-lg">{t["amigos.tus"]} ({datos.amigos.length})</h3>
         {datos.amigos.length === 0 ? (
-          <p className="text-suave">Aún no tienes compañeros. Busca a quien entrena contigo y agrégalo.</p>
+          <p className="text-suave">{t["amigos.ninguno"]}</p>
         ) : (
           <ul className="grid gap-2 md:grid-cols-2">
             {datos.amigos.map((r) => (
               <Fila key={r.amistad_id} p={r.persona}>
-                <button className="text-xs text-suave hover:text-lava" onClick={() => llamar("amistad_quitar", { p_otro: r.persona.id })}>Quitar</button>
+                <button className="text-xs text-suave hover:text-lava" onClick={() => llamar("amistad_quitar", { p_otro: r.persona.id })}>{t["amigos.quitar"]}</button>
               </Fila>
             ))}
           </ul>
@@ -111,11 +113,11 @@ export default function Amigos({ inicial }: { inicial: MisAmigos }) {
 
       {datos.enviadas.length > 0 && (
         <div className="grid gap-2">
-          <h3 className="text-lg">Solicitudes enviadas</h3>
+          <h3 className="text-lg">{t["amigos.enviadas"]}</h3>
           <ul className="grid gap-2">
             {datos.enviadas.map((r) => (
               <Fila key={r.amistad_id} p={r.persona}>
-                <button className="text-xs text-suave hover:text-lava" onClick={() => llamar("amistad_quitar", { p_otro: r.persona.id })}>Cancelar</button>
+                <button className="text-xs text-suave hover:text-lava" onClick={() => llamar("amistad_quitar", { p_otro: r.persona.id })}>{t["comun.cancelar"]}</button>
               </Fila>
             ))}
           </ul>

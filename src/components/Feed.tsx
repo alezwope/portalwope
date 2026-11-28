@@ -5,31 +5,30 @@ import Link from "next/link";
 import { crearCliente } from "@/lib/supabase/client";
 import { nivelDe } from "@/lib/catalogos";
 import { MOTIVOS_REPORTE, hace, mensajeError, type ItemFeed } from "@/lib/social";
+import { useTextos } from "@/components/Idioma";
+import type { ClaveTexto } from "@/lib/i18n/diccionarios";
 import Avatar from "@/components/Avatar";
 import Zona from "@/components/Zona";
 
 type Pestana = "amigos" | "zona" | "mios";
-const PESTANAS: { id: Pestana; texto: string }[] = [
-  { id: "amigos", texto: "Amigos" },
-  { id: "zona", texto: "Mi zona" },
-  { id: "mios", texto: "Mis logros" },
-];
-const VACIO: Record<Pestana, string> = {
-  amigos: "Aún no hay novedades de tus amigos. Agrega compañeros de barra en Comunidad o comparte tu primer logro.",
-  zona: "",
-  mios: "Tus logros aparecerán aquí: tu nivel, tus primeras marcas y tus récords.",
-};
 
-function hostDe(url: string) {
+function hostDe(url: string, otro: string) {
   try {
     const h = new URL(url).hostname.replace(/^(www|m)\./, "");
     return h.startsWith("youtu") ? "YouTube" : "Facebook";
   } catch {
-    return "Enlace";
+    return otro;
   }
 }
 
 export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
+  const { t, idioma } = useTextos();
+  const PESTANAS: { id: Pestana; texto: string }[] = [
+    { id: "amigos", texto: t["feed.amigos"] },
+    { id: "zona", texto: t["feed.zona"] },
+    { id: "mios", texto: t["feed.mios"] },
+  ];
+  const VACIO: Record<Pestana, string> = { amigos: t["feed.vacioAmigos"], zona: "", mios: t["feed.vacioMios"] };
   const [pestana, setPestana] = useState<Pestana>("amigos");
   const [items, setItems] = useState<ItemFeed[]>(inicial);
   const [cargando, setCargando] = useState(false);
@@ -82,32 +81,32 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
   async function reportar(it: ItemFeed, motivo: string) {
     const { error } = await crearCliente().rpc("reportar", { p_tipo: it.tipo, p_id: it.id, p_motivo: motivo });
     setReportando(null);
-    setMsg(error ? { ok: false, texto: mensajeError(error) } : { ok: true, texto: "Gracias. Revisaremos este contenido." });
+    setMsg(error ? { ok: false, texto: mensajeError(error) } : { ok: true, texto: t["feed.gracias"] });
   }
 
   return (
-    <section className="grid gap-4" aria-label="Novedades">
+    <section className="grid gap-4" aria-label={t["feed.novedades"]}>
       {pestana !== "zona" && (
       <form onSubmit={publicar} className="tarjeta grid gap-2">
         <label className="grid gap-1 text-sm">
-          <span className="sr-only">Comparte con tus compañeros de barra</span>
+          <span className="sr-only">{t["feed.comparte"]}</span>
           <textarea
             className="campo min-h-20"
             maxLength={500}
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            placeholder="Comparte tu entrenamiento de hoy con tus compañeros de barra…"
+            placeholder={t["feed.placeholder"]}
           />
         </label>
-        <input className="campo" type="url" value={enlace} onChange={(e) => setEnlace(e.target.value)} placeholder="Enlace de YouTube o Facebook (opcional)" aria-label="Enlace de YouTube o Facebook" />
+        <input className="campo" type="url" value={enlace} onChange={(e) => setEnlace(e.target.value)} placeholder={t["feed.urlPlaceholder"]} aria-label={t["feed.urlPlaceholder"]} />
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-suave">{texto.length}/500 · Tus amigos lo ven; nadie más.</span>
-          <button className="btn btn-lava !py-1.5" disabled={cargando || texto.trim().length === 0}>Publicar</button>
+          <span className="text-xs text-suave">{texto.length}/500 · {t["feed.soloAmigos"]}</span>
+          <button className="btn btn-lava !py-1.5" disabled={cargando || texto.trim().length === 0}>{t["feed.publicar"]}</button>
         </div>
       </form>
       )}
 
-      <div role="tablist" aria-label="Qué ver" className="flex gap-2">
+      <div role="tablist" aria-label={t["feed.queVer"]} className="flex gap-2">
         {PESTANAS.map((p) => (
           <button
             key={p.id}
@@ -138,7 +137,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
                   <div className="min-w-0 flex-1">
                     <Link href={`/panel/u/${it.autor.alias}`} className="font-bold hover:text-lava">@{it.autor.alias}</Link>
                     {nv && <span className="ml-2 text-xs" style={{ color: nv.color }}>{nv.nombre}</span>}
-                    <p className="text-xs text-suave">{hace(it.creado_en)}</p>
+                    <p className="text-xs text-suave">{hace(it.creado_en, idioma)}</p>
                   </div>
                 </div>
                 {it.tipo === "logro" ? (
@@ -148,24 +147,24 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
                 )}
                 {it.enlace && (
                   <a href={it.enlace} target="_blank" rel="noopener noreferrer nofollow ugc" className="btn btn-borde justify-self-start !py-1 text-sm">
-                    ▶ Ver en {hostDe(it.enlace)}
+                    ▶ {t["feed.verEn"]} {hostDe(it.enlace, t["feed.enlace"])}
                   </a>
                 )}
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <button onClick={() => reaccionar(it)} aria-pressed={it.yo_reaccione} className={`rounded-full border px-3 py-1 ${it.yo_reaccione ? "border-lava text-lava" : "border-borde text-suave"}`}>
-                    💪 {it.reacciones > 0 ? it.reacciones : "Fuerza"}
+                    💪 {it.reacciones > 0 ? it.reacciones : t["feed.fuerza"]}
                   </button>
                   {it.es_mio && it.tipo === "publicacion" && (
-                    <button onClick={() => borrar(it)} className="text-suave hover:text-lava">Borrar</button>
+                    <button onClick={() => borrar(it)} className="text-suave hover:text-lava">{t["feed.borrar"]}</button>
                   )}
                   {!it.es_mio && (
-                    <button onClick={() => setReportando(reportando === it.id ? null : it.id)} className="text-suave hover:text-lava">Reportar</button>
+                    <button onClick={() => setReportando(reportando === it.id ? null : it.id)} className="text-suave hover:text-lava">{t["feed.reportar"]}</button>
                   )}
                 </div>
                 {reportando === it.id && (
-                  <div className="flex flex-wrap gap-2" role="group" aria-label="Motivo del reporte">
-                    {MOTIVOS_REPORTE.map((m) => (
-                      <button key={m} onClick={() => reportar(it, m)} className="rounded-full border border-borde px-3 py-1 text-xs hover:border-lava">{m}</button>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label={t["feed.motivoAria"]}>
+                    {MOTIVOS_REPORTE.map((m, i) => (
+                      <button key={m} onClick={() => reportar(it, m)} className="rounded-full border border-borde px-3 py-1 text-xs hover:border-lava">{t[`motivo.${i}` as ClaveTexto]}</button>
                     ))}
                   </div>
                 )}
@@ -174,7 +173,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
           })}
         </ul>
       )}
-      {pestana !== "zona" && items.length > 0 && <p className="text-center text-sm text-suave">Ya viste todo lo de hoy. 🌿 Ve a entrenar: aquí te esperamos con tus logros.</p>}
+      {pestana !== "zona" && items.length > 0 && <p className="text-center text-sm text-suave">{t["feed.fin"]}</p>}
     </section>
   );
 }

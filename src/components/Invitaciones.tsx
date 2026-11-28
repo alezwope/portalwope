@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
+import { useTextos } from "@/components/Idioma";
 import { crearCliente } from "@/lib/supabase/client";
 
 type Inv = { codigo: string; escuela_id: string | null; usos: number };
 
 function Qr({ url, nombre }: { url: string; nombre: string }) {
+  const { t } = useTextos();
   const [src, setSrc] = useState("");
   useEffect(() => {
     QRCode.toDataURL(url, { width: 480, margin: 2, color: { dark: "#0D0B0A", light: "#FFFFFF" } }).then(setSrc);
@@ -16,8 +18,8 @@ function Qr({ url, nombre }: { url: string; nombre: string }) {
   return (
     <div className="grid justify-items-start gap-1">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={`Código QR de invitación ${nombre}`} className="h-40 w-40 rounded-lg" />
-      <a href={src} download={`invitacion-${nombre}.png`} className="text-sm text-dorado underline">Descargar QR</a>
+      <img src={src} alt={`${t["inv.qrAlt"]} ${nombre}`} className="h-40 w-40 rounded-lg" />
+      <a href={src} download={`invitacion-${nombre}.png`} className="text-sm text-dorado underline">{t["inv.descargarQr"]}</a>
     </div>
   );
 }
@@ -34,11 +36,12 @@ export default function Invitaciones({
   escuelas: { id: string; nombre: string }[];
 }) {
   const router = useRouter();
+  const { t } = useTextos();
   const [escuela, setEscuela] = useState("");
   const [copiado, setCopiado] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
-  const nombreEscuela = (id: string | null) => escuelas.find((e) => e.id === id)?.nombre ?? "Entrenamiento individual";
+  const nombreEscuela = (id: string | null) => escuelas.find((e) => e.id === id)?.nombre ?? t["inv.individual"];
 
   async function crear() {
     setError("");
@@ -50,7 +53,7 @@ export default function Invitaciones({
   }
 
   async function desactivar(codigo: string) {
-    if (!window.confirm("¿Desactivar este link? Quien lo tenga ya no podrá usarlo.")) return;
+    if (!window.confirm(t["inv.confDesactivar"])) return;
     await crearCliente().rpc("desactivar_invitacion", { p_codigo: codigo });
     router.refresh();
   }
@@ -60,7 +63,7 @@ export default function Invitaciones({
       await navigator.clipboard.writeText(url);
       setCopiado(url);
     } catch {
-      setError("No pudimos copiar. Mantén presionado el link para copiarlo.");
+      setError(t["inv.errCopiar"]);
     }
   }
 
@@ -69,18 +72,18 @@ export default function Invitaciones({
       <div className="tarjeta flex flex-wrap items-end gap-3">
         {escuelas.length > 0 && (
           <label className="grid gap-1 text-sm">
-            Para
+            {t["inv.para"]}
             <select className="campo" value={escuela} onChange={(e) => setEscuela(e.target.value)}>
-              <option value="">Entrenamiento individual</option>
+              <option value="">{t["inv.individual"]}</option>
               {escuelas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
             </select>
           </label>
         )}
-        <button type="button" onClick={crear} disabled={cargando} className="btn btn-lava">Crear link de invitación</button>
+        <button type="button" onClick={crear} disabled={cargando} className="btn btn-lava">{t["inv.crear"]}</button>
       </div>
       {error && <p className="aviso-error" role="alert">{error}</p>}
       {invitaciones.length === 0 ? (
-        <p className="text-suave">Todavía no creaste invitaciones.</p>
+        <p className="text-suave">{t["inv.ninguna"]}</p>
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
           {invitaciones.map((i) => {
@@ -90,14 +93,14 @@ export default function Invitaciones({
                 <p className="font-bold">{nombreEscuela(i.escuela_id)}</p>
                 <code className="break-all rounded bg-bg px-2 py-1 text-sm">{url}</code>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => copiar(url)} className="btn btn-borde !py-1.5">{copiado === url ? "¡Copiado!" : "Copiar link"}</button>
-                  <a href={`https://wa.me/?text=${encodeURIComponent("Súmate a mis entrenamientos en UniBars: " + url)}`} target="_blank" rel="noopener noreferrer" className="btn btn-borde !py-1.5">
-                    Enviar por WhatsApp
+                  <button type="button" onClick={() => copiar(url)} className="btn btn-borde !py-1.5">{copiado === url ? t["inv.copiado"] : t["inv.copiar"]}</button>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(t["inv.waTexto"] + " " + url)}`} target="_blank" rel="noopener noreferrer" className="btn btn-borde !py-1.5">
+                    {t["inv.wa"]}
                   </a>
-                  <button type="button" onClick={() => desactivar(i.codigo)} className="btn btn-borde !py-1.5">Desactivar</button>
+                  <button type="button" onClick={() => desactivar(i.codigo)} className="btn btn-borde !py-1.5">{t["inv.desactivar"]}</button>
                 </div>
                 <Qr url={url} nombre={i.codigo} />
-                <p className="text-xs text-suave">Usado {i.usos} {i.usos === 1 ? "vez" : "veces"}</p>
+                <p className="text-xs text-suave">{t["inv.usado"]} {i.usos} {i.usos === 1 ? t["inv.vez"] : t["inv.veces"]}</p>
               </li>
             );
           })}
