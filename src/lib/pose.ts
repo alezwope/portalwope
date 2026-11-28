@@ -4,6 +4,9 @@ export const VERSION_MOTOR = "arena-4.23";
 type Cb = (n: number, estado: string, texto?: string) => void;
 export type ContadorPose = { n: number; parar: () => void };
 export type ArenaPose = {
+  par: Record<string, [string, string, number, number, number, string][]>;
+  def: Record<string, Record<string, number>>;
+  cal: () => Record<string, Record<string, number>>;
   Contador: new (video: HTMLVideoElement, lienzo: HTMLCanvasElement | null, tipo: string, cb: Cb) => ContadorPose;
   calibrar: (o: Record<string, Record<string, number>>) => void;
   sostenido: (t: string) => boolean;
@@ -26,7 +29,17 @@ export function cargarMotor(): Promise<ArenaPose> {
     const s = document.createElement("script");
     s.src = "/pose/arena-pose.js?v=4.23";
     s.async = true;
-    s.onload = () => (window.ArenaPose ? ok(window.ArenaPose) : mal(new Error("motor")));
+    s.onload = async () => {
+      const m = window.ArenaPose;
+      if (!m) return mal(new Error("motor"));
+      // Calibración guardada desde la consola (reemplaza WOPE_POSE_CAL de la web). Si falla, quedan los valores de fábrica.
+      try {
+        const { crearCliente } = await import("@/lib/supabase/client");
+        const { data } = await crearCliente().from("calibracion_camara").select("ejercicio, valores");
+        if (data?.length) m.calibrar(Object.fromEntries(data.map((f) => [f.ejercicio, f.valores as Record<string, number>])));
+      } catch {}
+      ok(m);
+    };
     s.onerror = () => { promesa = null; mal(new Error("motor")); };
     document.head.appendChild(s);
   });
