@@ -3,29 +3,29 @@ import Link from "next/link";
 import Cabecera from "@/components/Cabecera";
 import Nivelador from "@/components/Nivelador";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { textos } from "@/lib/i18n/servidor";
 
-export const metadata: Metadata = {
-  title: "Nivelador: descubre tu nivel de calistenia",
-  description: "Cuatro pruebas simples (piernas, empuje, core y tracción) para saber si eres Génesis, Fénix, Guerrero, Maestro o Titán. Gratis.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await textos();
+  return { title: t["niv.metaTitulo"], description: t["niv.metaDesc"] };
+}
 
 export default async function PaginaNivelador() {
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [{ data: claims }, { t }] = await Promise.all([supabase.auth.getClaims(), textos()]);
+  const conSesion = !!claims?.claims?.sub;
 
   return (
     <>
       <Cabecera>
-        <Link href={user ? "/panel" : "/entrar"} className="btn btn-lava !py-1.5">{user ? "Mi panel" : "Entrar"}</Link>
+        <Link href={conSesion ? "/panel" : "/entrar"} className="btn btn-lava !py-1.5">{conSesion ? t["niv.miPanel"] : t["comun.entrar"]}</Link>
       </Cabecera>
       <main className="mx-auto grid max-w-3xl gap-5 px-4 py-6">
         <div className="grid gap-2">
-          <h1 className="text-3xl">Nivelador</h1>
-          <p className="text-suave">Descubre tu nivel con cuatro pruebas simples. Tarda unos 5 minutos y no necesitas cuenta para ver tu resultado.</p>
+          <h1 className="text-3xl">{t["niv.titulo"]}</h1>
+          <p className="text-suave">{t["niv.intro"]}</p>
         </div>
-        <Nivelador conSesion={!!user} />
+        <Nivelador conSesion={conSesion} />
       </main>
     </>
   );

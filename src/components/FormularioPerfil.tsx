@@ -7,18 +7,19 @@ import type { Perfil } from "@/lib/sesion";
 import { useTextos } from "@/components/Idioma";
 import { nomCat } from "@/lib/i18n/diccionarios";
 import type { ClaveTexto } from "@/lib/i18n/diccionarios";
-import { NIVELES, OBJETIVOS } from "@/lib/catalogos";
+import Link from "next/link";
+import { OBJETIVOS, nivelDe } from "@/lib/catalogos";
 import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
   const router = useRouter();
+  const nivelActual = nivelDe(perfil.nivel);
   const { t } = useTextos();
   const [alias, setAlias] = useState(perfil.alias ?? "");
   const [nombre, setNombre] = useState(perfil.nombre ?? "");
   const [bio, setBio] = useState(perfil.bio ?? "");
   const [ub, setUb] = useState<Ubicacion>({ pais: perfil.pais ?? "", ciudad: perfil.ciudad ?? "" });
   const [invisible, setInvisible] = useState(perfil.modo_invisible);
-  const [nivel, setNivel] = useState(perfil.nivel ?? "");
   const [objetivo, setObjetivo] = useState(perfil.objetivo ?? "");
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
@@ -40,7 +41,6 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
         ciudad: ub.ciudad.trim() || null,
         pais: ub.pais || null,
         modo_invisible: invisible,
-        nivel: nivel || null,
         objetivo: objetivo || null,
       })
       .eq("id", perfil.id);
@@ -68,13 +68,18 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
       </label>
       <SelectorUbicacion valor={ub} onCambio={setUb} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="grid gap-1 text-sm">
+        <div className="grid gap-1 text-sm">
           {t["fperfil.nivel"]}
-          <select className="campo" value={nivel} onChange={(e) => setNivel(e.target.value)}>
-            <option value="">{t["fperfil.noSe"]}</option>
-            {NIVELES.map((n) => <option key={n.clave} value={n.clave}>{n.nombre} · {t[`entrenar.etapa.${n.clave}` as ClaveTexto]}</option>)}
-          </select>
-        </label>
+          <div className="flex flex-wrap items-center gap-2">
+            {nivelActual ? (
+              <span className="font-bold" style={{ color: nivelActual.color }}>{nivelActual.nombre} · {t[`entrenar.etapa.${nivelActual.clave}` as ClaveTexto]}</span>
+            ) : (
+              <span className="text-suave">{t["fperfil.noSe"]}</span>
+            )}
+            <Link href="/nivelador" className="btn btn-borde !py-1 text-xs">{t["niv.hacer"]}</Link>
+          </div>
+          <span className="text-xs text-suave">{t["niv.nivelPerfil"]}</span>
+        </div>
         <label className="grid gap-1 text-sm">
           {t["fperfil.objetivo"]}
           <select className="campo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)}>

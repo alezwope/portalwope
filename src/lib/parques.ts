@@ -9,8 +9,8 @@ export type CategoriaParque = keyof typeof CATEGORIAS;
 /** Punto compacto que devuelve la base: [id, lat, lng, categoria, aparatos, nombre]. */
 export type PuntoParque = [string, number, number, CategoriaParque, number | null, string | null];
 
-export const nombreParque = (nombre: string | null, categoria: CategoriaParque) =>
-  nombre?.trim() || `${CATEGORIAS[categoria].nombre} (sin nombre)`;
+export const nombreParque = (nombre: string | null, categoria: CategoriaParque, cat?: string, sinNombre = "sin nombre") =>
+  nombre?.trim() || `${cat ?? CATEGORIAS[categoria].nombre} (${sinNombre})`;
 
 export function urlComoLlegar(lat: number, lng: number) {
   return `https://www.openstreetmap.org/directions?to=${lat}%2C${lng}`;

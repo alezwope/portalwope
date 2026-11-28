@@ -1,5 +1,7 @@
 "use client";
 
+import { useTextos } from "@/components/Idioma";
+import { nomCat, rellenar } from "@/lib/i18n/diccionarios";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Map as MapaMapLibre, GeoJSONSource, MapMouseEvent } from "maplibre-gl";
@@ -28,6 +30,8 @@ function aGeoJSON(puntos: PuntoParque[], activas: Set<CategoriaParque>) {
 }
 
 export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: string }) {
+  const { t, idioma } = useTextos();
+  const nomC = (c: CategoriaParque) => nomCat(t, "cat", c, CATEGORIAS[c].nombre);
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaMapLibre | null>(null);
   const listo = useRef(false);
@@ -51,7 +55,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
     fetch("/api/parques")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d: PuntoParque[]) => vivo && setPuntos(d))
-      .catch(() => vivo && setError("No pudimos cargar los parques. Recarga la página."));
+      .catch(() => vivo && setError(t["mapa.errParques"]));
     return () => {
       vivo = false;
     };
@@ -228,7 +232,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
         (m.getSource("parques") as GeoJSONSource).setData(geojsonRef.current);
       });
       nuevo.on("error", (ev) => {
-        if (!listo.current) setAviso("El mapa base tarda en cargar. Revisa tu conexión.");
+        if (!listo.current) setAviso(t["mapa.lento"]);
         console.warn("mapa", ev?.error?.message);
       });
     })();
@@ -252,7 +256,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
       fetch("/api/calor")
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: Calor) => setCalor(d))
-        .catch(() => setAviso("No pudimos cargar la actividad. Intenta de nuevo."));
+        .catch(() => setAviso(t["mapa.errCalor"]));
     }
     const m = mapa.current;
     if (!listo.current || !m) return;
@@ -264,7 +268,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
       fetch("/api/escuelas")
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: Escuela[]) => setEscuelas(d))
-        .catch(() => setAviso("No pudimos cargar las escuelas. Intenta de nuevo."));
+        .catch(() => setAviso(t["mapa.errEscuelas"]));
     }
     const m = mapa.current;
     if (!listo.current || !m) return;
@@ -294,8 +298,8 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
 
   function cercaDeMi() {
     setAviso("");
-    if (!navigator.geolocation) return setAviso("Tu navegador no permite ubicarte.");
-    setAviso("Buscando tu ubicación…");
+    if (!navigator.geolocation) return setAviso(t["parque.sinGeo"]);
+    setAviso(t["mapa.buscandoUb"]);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         // La ubicación se usa solo en tu dispositivo: no se envía a ningún servidor.
@@ -311,7 +315,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
           setSeleccion({ id, nombre, categoria, aparatos, lat: plat, lng: plng });
         }
       },
-      () => setAviso("No pudimos obtener tu ubicación. Revisa el permiso del navegador."),
+      () => setAviso(t["parque.errGeo"]),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
     );
   }
@@ -336,8 +340,8 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
             className="campo"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar un parque por nombre"
-            aria-label="Buscar un parque por nombre"
+            placeholder={t["mapa.buscar"]}
+            aria-label={t["mapa.buscar"]}
           />
           {resultados.length > 0 && (
             <ul className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-borde bg-card shadow-lg">
@@ -359,12 +363,12 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
             </ul>
           )}
         </div>
-        <button type="button" onClick={cercaDeMi} className="btn btn-lava">📍 Cerca de mí</button>
-        <button type="button" aria-pressed={calorOn} onClick={() => setCalorOn((v) => !v)} className={`btn ${calorOn ? "btn-dorado" : "btn-borde"}`}>🔥 Calor</button>
-        <button type="button" aria-pressed={escuelasOn} onClick={() => { if (escuelasOn) setEscuelaSel(null); setEscuelasOn(!escuelasOn); }} className={`btn ${escuelasOn ? "btn-dorado" : "btn-borde"}`}>🏫 Escuelas</button>
+        <button type="button" onClick={cercaDeMi} className="btn btn-lava">{t["mapa.cerca"]}</button>
+        <button type="button" aria-pressed={calorOn} onClick={() => setCalorOn((v) => !v)} className={`btn ${calorOn ? "btn-dorado" : "btn-borde"}`}>{t["mapa.calor"]}</button>
+        <button type="button" aria-pressed={escuelasOn} onClick={() => { if (escuelasOn) setEscuelaSel(null); setEscuelasOn(!escuelasOn); }} className={`btn ${escuelasOn ? "btn-dorado" : "btn-borde"}`}>{t["mapa.escuelas"]}</button>
       </div>
 
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Tipos de parque">
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t["mapa.tipos"]}>
         {ORDEN.map((c) => {
           const on = activas.has(c);
           return (
@@ -373,12 +377,12 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
               type="button"
               aria-pressed={on}
               onClick={() => alternar(c)}
-              title={CATEGORIAS[c].detalle}
+              title={nomCat(t, "catD", c, CATEGORIAS[c].detalle)}
               className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm ${on ? "border-texto" : "border-borde text-suave opacity-70"}`}
             >
               <span aria-hidden className="inline-block h-3 w-3 rounded-full border border-white" style={{ background: CATEGORIAS[c].color }} />
-              {CATEGORIAS[c].nombre}
-              {conteo[c] ? <span className="text-xs text-suave">{conteo[c].toLocaleString("es")}</span> : null}
+              {nomC(c)}
+              {conteo[c] ? <span className="text-xs text-suave">{conteo[c].toLocaleString(idioma)}</span> : null}
             </button>
           );
         })}
@@ -387,52 +391,52 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
       {calorOn && calor && (
         <p className="text-sm text-suave">
           {calor.length === 0
-            ? "Aún no hay check-ins. ¡Sé el primero en entrenar y marcar tu parque!"
-            : `Zonas más cálidas = más entrenamientos en los últimos 30 días. Círculo dorado = hay gente entrenando ahora (${calor.filter((c) => c[2] > 0).length} parques).`}
+            ? t["mapa.sinCheckins"]
+            : rellenar(t["mapa.calorTexto"], { n: calor.filter((c) => c[2] > 0).length })}
         </p>
       )}
       {(aviso || error) && <p className={error ? "aviso-error" : "aviso-ok"} role="status">{error || aviso}</p>}
 
       <div className="relative overflow-hidden rounded-2xl border border-borde" style={{ height: alto, minHeight: 360 }}>
-        <div ref={contenedor} className="absolute inset-0" aria-label="Mapa de parques de calistenia" />
+        <div ref={contenedor} className="absolute inset-0" aria-label={t["mapa.aria"]} />
         {cargandoMapa && (
-          <div className="absolute inset-0 grid place-items-center bg-card text-suave">Cargando el mapa…</div>
+          <div className="absolute inset-0 grid place-items-center bg-card text-suave">{t["mapa.cargando"]}</div>
         )}
         {escuelaSel && (
           <div className="absolute inset-x-3 bottom-8 z-10 mx-auto grid max-w-md gap-2 rounded-xl border border-borde bg-card p-4 shadow-xl">
-            <button type="button" onClick={() => setEscuelaSel(null)} className="absolute right-3 top-2 text-suave hover:text-lava" aria-label="Cerrar">✕</button>
-            <p className="text-xs text-dorado">🏫 Escuela de calistenia</p>
+            <button type="button" onClick={() => setEscuelaSel(null)} className="absolute right-3 top-2 text-suave hover:text-lava" aria-label={t["comun.cerrar"]}>✕</button>
+            <p className="text-xs text-dorado">{t["mapa.escuela"]}</p>
             <p className="pr-6 text-lg font-bold">{escuelaSel.nombre}</p>
-            <p className="text-sm text-suave">Sede: {escuelaSel.sede}</p>
-            <Link href={`/e/${escuelaSel.slug}`} className="btn btn-lava justify-self-start !py-1.5">Ver escuela</Link>
+            <p className="text-sm text-suave">{t["mapa.sede"]} {escuelaSel.sede}</p>
+            <Link href={`/e/${escuelaSel.slug}`} className="btn btn-lava justify-self-start !py-1.5">{t["mapa.verEscuela"]}</Link>
           </div>
         )}
         {seleccion && (
           <div className="absolute inset-x-3 bottom-8 z-10 mx-auto grid max-w-md gap-2 rounded-xl border border-borde bg-card p-4 shadow-xl">
-            <button type="button" onClick={() => setSeleccion(null)} className="absolute right-3 top-2 text-suave hover:text-lava" aria-label="Cerrar">✕</button>
+            <button type="button" onClick={() => setSeleccion(null)} className="absolute right-3 top-2 text-suave hover:text-lava" aria-label={t["comun.cerrar"]}>✕</button>
             <p className="flex items-center gap-2 text-xs text-suave">
               <span aria-hidden className="inline-block h-3 w-3 rounded-full" style={{ background: CATEGORIAS[seleccion.categoria].color }} />
-              {CATEGORIAS[seleccion.categoria].nombre}
+              {nomC(seleccion.categoria)}
             </p>
-            <p className="pr-6 text-lg font-bold">{nombreParque(seleccion.nombre, seleccion.categoria)}</p>
-            {seleccion.aparatos ? <p className="text-sm text-suave">{seleccion.aparatos} aparato(s) registrados</p> : null}
+            <p className="pr-6 text-lg font-bold">{nombreParque(seleccion.nombre, seleccion.categoria, nomC(seleccion.categoria), t["parque.sinNombre"])}</p>
+            {seleccion.aparatos ? <p className="text-sm text-suave">{rellenar(t["mapa.aparatos"], { n: seleccion.aparatos })}</p> : null}
             {calorOn && calor && (() => {
               const c = calor.find((x) => x[0] === seleccion.id);
               return c ? (
-                <p className="text-sm text-dorado">{c[1]} entrenamiento(s) en 30 días{c[2] > 0 ? " · hay gente entrenando ahora" : ""}</p>
+                <p className="text-sm text-dorado">{rellenar(t["mapa.entrenos30"], { n: c[1] })}{c[2] > 0 ? t["mapa.genteAhora"] : ""}</p>
               ) : (
-                <p className="text-sm text-suave">Sin entrenamientos registrados en 30 días.</p>
+                <p className="text-sm text-suave">{t["mapa.sinEntrenos"]}</p>
               );
             })()}
             <div className="flex flex-wrap gap-2">
-              <Link href={`/parque/${seleccion.id}`} className="btn btn-lava !py-1.5">Ver ficha</Link>
-              <a href={urlComoLlegar(seleccion.lat, seleccion.lng)} target="_blank" rel="noopener noreferrer" className="btn btn-borde !py-1.5">Cómo llegar</a>
+              <Link href={`/parque/${seleccion.id}`} className="btn btn-lava !py-1.5">{t["mapa.verFicha"]}</Link>
+              <a href={urlComoLlegar(seleccion.lat, seleccion.lng)} target="_blank" rel="noopener noreferrer" className="btn btn-borde !py-1.5">{t["parque.comoLlegar"]}</a>
             </div>
           </div>
         )}
       </div>
       <p className="text-xs text-suave">
-        Mapa © OpenFreeMap, datos © colaboradores de OpenStreetMap (ODbL). Parques: OpenStreetMap y fuentes oficiales. Tu ubicación se usa solo en tu dispositivo.
+        {t["mapa.creditos"]}
       </p>
     </div>
   );

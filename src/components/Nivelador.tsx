@@ -3,24 +3,27 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { NIVELES, nivelDe } from "@/lib/catalogos";
-import { PARQ, ENTRADAS_VACIAS, calcular, NOMBRE_NIVEL, type Entradas } from "@/lib/nivelador";
+import { ENTRADAS_VACIAS, N_PARQ, calcular, completar, sinImpacto, type ClavePatron, type Entradas, type Aviso } from "@/lib/nivelador";
 import { guardarNivelacion } from "@/app/nivelador/acciones";
+import { useTextos } from "@/components/Idioma";
+import { rellenar, type ClaveTexto, type Textos } from "@/lib/i18n/diccionarios";
 
-const CLAVE = "unibars.nivelador.v1";
+const CLAVE = "unibars.nivelador.v2";
+const tx = (t: Textos, k: string) => (t as Record<string, string>)[k] ?? k;
 
-function Num({ valor, onChange, etiqueta, ayuda, unidad }: { valor: number | null; onChange: (v: number | null) => void; etiqueta: string; ayuda?: string; unidad?: string }) {
+function Num({ valor, onChange, etiqueta, ayuda, unidad, max = 600 }: { valor: number | null; onChange: (v: number | null) => void; etiqueta: string; ayuda?: string; unidad?: string; max?: number }) {
   return (
     <label className="grid gap-1 text-sm">
       <span>{etiqueta}{unidad ? <span className="text-suave"> ({unidad})</span> : null}</span>
       <input
-        className="campo"
+        className="campo num"
         type="number"
         inputMode="numeric"
         min={0}
-        max={600}
+        max={max}
         value={valor ?? ""}
         placeholder="0"
-        onChange={(e) => onChange(e.target.value === "" ? null : Math.max(0, Math.min(600, Math.floor(Number(e.target.value)))))}
+        onChange={(e) => onChange(e.target.value === "" ? null : Math.max(0, Math.min(max, Math.floor(Number(e.target.value)))))}
       />
       {ayuda && <span className="text-xs text-suave">{ayuda}</span>}
     </label>
@@ -34,17 +37,26 @@ function Si({ valor, onChange, texto }: { valor: boolean; onChange: (v: boolean)
     </label>
   );
 }
-function Patron({ titulo, omitirTexto, omitir, setOmitir, children }: { titulo: string; omitirTexto: string; omitir: boolean; setOmitir: (v: boolean) => void; children: React.ReactNode }) {
+function Patron({ titulo, omitirTexto, omitir, setOmitir, intro, children }: { titulo: string; omitirTexto: string; omitir: boolean; setOmitir: (v: boolean) => void; intro?: string; children: React.ReactNode }) {
   return (
     <section className="tarjeta grid gap-3">
       <h2 className="text-xl text-lava">{titulo}</h2>
+      {intro && <p className="text-sm text-suave">{intro}</p>}
       <Si valor={omitir} onChange={setOmitir} texto={omitirTexto} />
       {!omitir && <div className="grid gap-3 sm:grid-cols-2">{children}</div>}
     </section>
   );
 }
 
+/** Texto de un aviso del cálculo, con los nombres de patrón traducidos. */
+function textoAviso(t: Textos, a: Aviso) {
+  const v = { ...(a.v ?? {}) };
+  if (typeof v.lista === "string") v.lista = v.lista.split(",").map((c) => tx(t, `niv.p.${c}`)).join(", ");
+  return rellenar(tx(t, a.k), v);
+}
+
 export default function Nivelador({ conSesion }: { conSesion: boolean }) {
+  const { t } = useTextos();
   const [e, setE] = useState<Entradas>(ENTRADAS_VACIAS);
   const [cargado, setCargado] = useState(false);
   const [calculado, setCalculado] = useState<ReturnType<typeof calcular> | null>(null);
@@ -53,17 +65,15 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
 
   useEffect(() => {
     try {
-      const g = localStorage.getItem(CLAVE);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (g) setE({ ...ENTRADAS_VACIAS, ...JSON.parse(g) });
+      const g = localStorage.getItem(CLAVE) ?? localStorage.getItem("unibars.nivelador.v1");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (g) setE(completar(JSON.parse(g)));
     } catch {}
     setCargado(true);
   }, []);
   useEffect(() => {
     if (!cargado) return;
-    try {
-      localStorage.setItem(CLAVE, JSON.stringify(e));
-    } catch {}
+    try { localStorage.setItem(CLAVE, JSON.stringify(e)); } catch {}
   }, [e, cargado]);
 
   const set = <K extends keyof Entradas>(k: K, v: Entradas[K]) => {
@@ -71,7 +81,8 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
     setCalculado(null);
     setMensaje(null);
   };
-  const sub = <K extends "piernas" | "empuje" | "core" | "traccion">(k: K, cambios: Partial<Entradas[K]>) => set(k, { ...e[k], ...cambios });
+  const sub = <K extends ClavePatron>(k: K, cambios: Partial<Entradas[K]>) => set(k, { ...e[k], ...cambios });
+  const impacto = sinImpacto(e);
 
   function calcularAhora() {
     setMensaje(null);
@@ -83,135 +94,144 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
   function guardar() {
     empezar(async () => {
       const r = await guardarNivelacion(e);
-      setMensaje(r.ok ? { tipo: "ok", texto: `¡Listo! Tu nivel ${NOMBRE_NIVEL[r.nivel as keyof typeof NOMBRE_NIVEL]} quedó guardado en tu perfil.` } : { tipo: "error", texto: r.error });
+      setMensaje(r.ok ? { tipo: "ok", texto: rellenar(t["niv.guardado"], { nivel: nivelDe(r.nivel)?.nombre ?? r.nivel }) } : { tipo: "error", texto: r.error });
     });
   }
 
   const r = calculado?.ok ? calculado.r : null;
   const nv = r ? nivelDe(r.nivel) : null;
+  const reps = t["niv.reps"], seg = t["niv.seg"];
 
   return (
     <div className="grid gap-5">
       <section className="tarjeta grid gap-3">
-        <h2 className="text-xl text-lava">1. Tu salud primero</h2>
-        <p className="text-sm text-suave">Cuestionario de aptitud para la actividad física (basado en el PAR-Q+). No reemplaza una consulta médica.</p>
-        {PARQ.map((q, i) => (
+        <h2 className="text-xl text-lava">{t["niv.salud"]}</h2>
+        <p className="text-sm text-suave">{t["niv.saludD"]}</p>
+        {Array.from({ length: N_PARQ }, (_, i) => (
           <fieldset key={i} className="grid gap-1">
-            <legend className="text-sm">{i + 1}. {q}</legend>
+            <legend className="text-sm">{i + 1}. {tx(t, `niv.parq.${i}`)}</legend>
             <div className="flex gap-4 text-sm">
               {[true, false].map((v) => (
                 <label key={String(v)} className="flex items-center gap-1">
                   <input type="radio" name={`parq${i}`} checked={e.parq[i] === v} onChange={() => set("parq", e.parq.map((x, j) => (j === i ? v : x)))} className="accent-[var(--lava)]" />
-                  {v ? "Sí" : "No"}
+                  {v ? t["niv.si"] : t["niv.no"]}
                 </label>
               ))}
             </div>
             {i === 5 && e.parq[5] === true && (
-              <input className="campo" maxLength={120} placeholder="¿Qué zona? (hombro, rodilla, espalda…)" value={e.parqZona} onChange={(ev) => set("parqZona", ev.target.value)} />
+              <input className="campo" maxLength={120} placeholder={t["niv.zona"]} value={e.parqZona} onChange={(ev) => set("parqZona", ev.target.value)} />
             )}
           </fieldset>
         ))}
       </section>
 
       <section className="tarjeta grid gap-3">
-        <h2 className="text-xl text-lava">2. Tu contexto</h2>
+        <h2 className="text-xl text-lava">{t["niv.contexto"]}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">
-            Rango de edad
+            {t["niv.edad"]}
             <select className="campo" value={e.edad} onChange={(ev) => set("edad", ev.target.value)}>
-              <option value="">Prefiero no decir</option>
-              {["13-17", "18-29", "30-39", "40-49", "50-59", "60+"].map((x) => <option key={x}>{x}</option>)}
+              <option value="">{t["niv.noDecir"]}</option>
+              {["18-29", "30-39", "40-49", "50-59", "60+"].map((x) => <option key={x}>{x}</option>)}
             </select>
           </label>
           <label className="grid gap-1 text-sm">
-            ¿Cuándo entrenaste fuerza por última vez?
+            {t["niv.ultimo"]}
             <select className="campo" value={e.ultimoEntreno} onChange={(ev) => set("ultimoEntreno", ev.target.value as Entradas["ultimoEntreno"])}>
-              <option value="">Elige…</option>
-              <option value="semana">Esta semana</option>
-              <option value="mes">En el último mes</option>
-              <option value="seis_meses">Hace 1 a 6 meses</option>
-              <option value="mas_seis">Hace más de 6 meses</option>
-              <option value="nunca">Nunca</option>
+              <option value="">{t["niv.elige"]}</option>
+              {(["semana", "mes", "seis_meses", "mas_seis", "nunca"] as const).map((u) => <option key={u} value={u}>{tx(t, `niv.u.${u}`)}</option>)}
             </select>
           </label>
           <label className="grid gap-1 text-sm">
-            ¿Haces al menos 150 min de actividad moderada por semana?
+            {t["niv.activo"]}
             <select className="campo" value={e.activo === null ? "" : e.activo ? "si" : "no"} onChange={(ev) => set("activo", ev.target.value === "" ? null : ev.target.value === "si")}>
-              <option value="">Elige…</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
+              <option value="">{t["niv.elige"]}</option>
+              <option value="si">{t["niv.si"]}</option>
+              <option value="no">{t["niv.no"]}</option>
             </select>
           </label>
           <label className="grid gap-1 text-sm">
-            ¿Qué nivel crees que tienes?
+            {t["niv.percibido"]}
             <select className="campo" value={e.percibido} onChange={(ev) => set("percibido", ev.target.value as Entradas["percibido"])}>
-              <option value="">No sé</option>
+              <option value="">{t["niv.noSe"]}</option>
               {NIVELES.map((n) => <option key={n.clave} value={n.clave}>{n.nombre}</option>)}
             </select>
           </label>
         </div>
       </section>
 
-      <p className="text-sm text-suave">
-        3. Tus marcas. Pon <strong>0</strong> en lo que no puedas hacer y no pruebes nada que te duela. Necesitamos al menos 3 de los 4 patrones.
-      </p>
+      <p className="text-sm text-suave">{t["niv.marcasIntro"]}</p>
+      {impacto && <p className="aviso-error">{t["niv.impactoAviso"]}</p>}
 
-      <Patron titulo="Piernas" omitirTexto="Prefiero omitir este patrón" omitir={e.piernas.omitir} setOmitir={(v) => sub("piernas", { omitir: v })}>
-        <Num etiqueta="Sentadillas en 60 segundos" unidad="repeticiones" valor={e.piernas.reps} onChange={(v) => sub("piernas", { reps: v })} />
-        <Num etiqueta="Pistol libre (cada pierna)" unidad="repeticiones" valor={e.piernas.pistolLibre} onChange={(v) => sub("piernas", { pistolLibre: v })} ayuda="La pierna más débil." />
-        <Si valor={e.piernas.completa} onChange={(v) => sub("piernas", { completa: v })} texto="Bajo hasta abajo (cadera bajo las rodillas)" />
-        <Si valor={e.piernas.pistolAsistido} onChange={(v) => sub("piernas", { pistolAsistido: v })} texto="Hago pistol asistido (con apoyo)" />
-      </Patron>
-
-      <Patron titulo="Empuje" omitirTexto="Prefiero omitir este patrón" omitir={e.empuje.omitir} setOmitir={(v) => sub("empuje", { omitir: v })}>
-        <Num etiqueta="Flexiones en la pared" unidad="repeticiones" valor={e.empuje.pared} onChange={(v) => sub("empuje", { pared: v })} />
-        <Num etiqueta="Flexiones con manos en banco" unidad="repeticiones" valor={e.empuje.banco} onChange={(v) => sub("empuje", { banco: v })} />
-        <Num etiqueta="Flexiones con rodillas en el piso" unidad="repeticiones" valor={e.empuje.rodillas} onChange={(v) => sub("empuje", { rodillas: v })} />
-        <Num etiqueta="Flexiones completas en el piso" unidad="repeticiones" valor={e.empuje.piso} onChange={(v) => sub("empuje", { piso: v })} />
-        <Num etiqueta="Fondos en paralelas" unidad="repeticiones" valor={e.empuje.fondos} onChange={(v) => sub("empuje", { fondos: v })} />
+      <Patron titulo={t["niv.p.piernas"]} omitirTexto={t["niv.omitir"]} omitir={e.piernas.omitir} setOmitir={(v) => sub("piernas", { omitir: v })}>
+        <Num etiqueta={t["niv.sentadillas"]} unidad={reps} valor={e.piernas.reps} onChange={(v) => sub("piernas", { reps: v })} />
+        {!impacto && <Num etiqueta={t["niv.silla"]} unidad={seg} max={360} valor={e.piernas.silla} onChange={(v) => sub("piernas", { silla: v })} ayuda={t["niv.sillaAyuda"]} />}
+        <Num etiqueta={t["niv.pistol"]} unidad={reps} valor={e.piernas.pistolLibre} onChange={(v) => sub("piernas", { pistolLibre: v })} ayuda={t["niv.pistolAyuda"]} />
         <div className="grid gap-2">
-          <Si valor={e.empuje.pino} onChange={(v) => sub("empuje", { pino: v })} texto="Hago flexión de pino (fuerza)" />
-          <Si valor={e.empuje.pseudo} onChange={(v) => sub("empuje", { pseudo: v })} texto="Hago pseudo planche push-up" />
+          <Si valor={e.piernas.completa} onChange={(v) => sub("piernas", { completa: v })} texto={t["niv.completa"]} />
+          <Si valor={e.piernas.pistolAsistido} onChange={(v) => sub("piernas", { pistolAsistido: v })} texto={t["niv.pistolAsistido"]} />
         </div>
       </Patron>
 
-      <Patron titulo="Core" omitirTexto="Prefiero omitir este patrón" omitir={e.core.omitir} setOmitir={(v) => sub("core", { omitir: v })}>
-        <Num etiqueta="Plancha en codos" unidad="segundos" valor={e.core.plancha} onChange={(v) => sub("core", { plancha: v })} />
-        <Num etiqueta="Hollow body" unidad="segundos" valor={e.core.hollow} onChange={(v) => sub("core", { hollow: v })} />
-        <Num etiqueta="L-sit" unidad="segundos" valor={e.core.lsit} onChange={(v) => sub("core", { lsit: v })} />
-      </Patron>
-
-      <Patron titulo="Tracción" omitirTexto="No tengo barra a mano" omitir={e.traccion.omitir} setOmitir={(v) => sub("traccion", { omitir: v })}>
-        <Num etiqueta="Colgado de la barra" unidad="segundos" valor={e.traccion.colgado} onChange={(v) => sub("traccion", { colgado: v })} />
-        <Num etiqueta="Dominada estática (isométrica)" unidad="segundos" valor={e.traccion.estatica} onChange={(v) => sub("traccion", { estatica: v })} />
-        <Num etiqueta="Dominadas completas" unidad="repeticiones" valor={e.traccion.dominadas} onChange={(v) => sub("traccion", { dominadas: v })} />
+      <Patron titulo={t["niv.p.empuje"]} omitirTexto={t["niv.omitir"]} omitir={e.empuje.omitir} setOmitir={(v) => sub("empuje", { omitir: v })}>
+        <Num etiqueta={t["niv.pared"]} unidad={reps} valor={e.empuje.pared} onChange={(v) => sub("empuje", { pared: v })} />
+        <Num etiqueta={t["niv.banco"]} unidad={reps} valor={e.empuje.banco} onChange={(v) => sub("empuje", { banco: v })} />
+        <Num etiqueta={t["niv.rodillas"]} unidad={reps} valor={e.empuje.rodillas} onChange={(v) => sub("empuje", { rodillas: v })} />
+        <Num etiqueta={t["niv.piso"]} unidad={reps} valor={e.empuje.piso} onChange={(v) => sub("empuje", { piso: v })} />
+        <Num etiqueta={t["niv.fondos"]} unidad={reps} valor={e.empuje.fondos} onChange={(v) => sub("empuje", { fondos: v })} />
         <div className="grid gap-2">
-          <Si valor={e.traccion.muscleUp} onChange={(v) => sub("traccion", { muscleUp: v })} texto="Hago muscle up estricto" />
-          <Si valor={e.traccion.frontLever} onChange={(v) => sub("traccion", { frontLever: v })} texto="Hago front lever tuck" />
+          <Si valor={e.empuje.pino} onChange={(v) => sub("empuje", { pino: v })} texto={t["niv.pino"]} />
+          <Si valor={e.empuje.pseudo} onChange={(v) => sub("empuje", { pseudo: v })} texto={t["niv.pseudo"]} />
         </div>
       </Patron>
+
+      <Patron titulo={t["niv.p.core"]} omitirTexto={t["niv.omitir"]} omitir={e.core.omitir} setOmitir={(v) => sub("core", { omitir: v })}>
+        <Num etiqueta={t["niv.plancha"]} unidad={seg} valor={e.core.plancha} onChange={(v) => sub("core", { plancha: v })} />
+        <Num etiqueta={t["niv.hollow"]} unidad={seg} valor={e.core.hollow} onChange={(v) => sub("core", { hollow: v })} />
+        <Num etiqueta={t["niv.lsit"]} unidad={seg} valor={e.core.lsit} onChange={(v) => sub("core", { lsit: v })} />
+      </Patron>
+
+      <Patron titulo={t["niv.p.traccion"]} omitirTexto={t["niv.sinBarra"]} omitir={e.traccion.omitir} setOmitir={(v) => sub("traccion", { omitir: v })}>
+        <Num etiqueta={t["niv.colgado"]} unidad={seg} valor={e.traccion.colgado} onChange={(v) => sub("traccion", { colgado: v })} />
+        <Num etiqueta={t["niv.estatica"]} unidad={seg} valor={e.traccion.estatica} onChange={(v) => sub("traccion", { estatica: v })} />
+        <Num etiqueta={t["niv.dominadas"]} unidad={reps} valor={e.traccion.dominadas} onChange={(v) => sub("traccion", { dominadas: v })} />
+        <div className="grid gap-2">
+          <Si valor={e.traccion.muscleUp} onChange={(v) => sub("traccion", { muscleUp: v })} texto={t["niv.muscleUp"]} />
+          <Si valor={e.traccion.frontLever} onChange={(v) => sub("traccion", { frontLever: v })} texto={t["niv.frontLever"]} />
+        </div>
+      </Patron>
+
+      {!impacto && (
+        <Patron titulo={t["niv.p.resistencia"]} intro={t["niv.burpeesIntro"]} omitirTexto={t["niv.omitirRes"]} omitir={e.resistencia.omitir} setOmitir={(v) => sub("resistencia", { omitir: v })}>
+          <Num etiqueta={t["niv.medios"]} unidad={reps} max={120} valor={e.resistencia.medios} onChange={(v) => sub("resistencia", { medios: v })} />
+          <Num etiqueta={t["niv.conFlexion"]} unidad={reps} max={120} valor={e.resistencia.conFlexion} onChange={(v) => sub("resistencia", { conFlexion: v })} />
+          <div className="sm:col-span-2">
+            <Si valor={e.resistencia.pechoSalto} onChange={(v) => sub("resistencia", { pechoSalto: v })} texto={t["niv.pechoSalto"]} />
+          </div>
+        </Patron>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" className="btn btn-lava" onClick={calcularAhora}>Calcular mi nivel</button>
-        <button type="button" className="btn btn-borde" onClick={() => { setE(ENTRADAS_VACIAS); setCalculado(null); try { localStorage.removeItem(CLAVE); } catch {} }}>Borrar respuestas</button>
+        <button type="button" className="btn btn-lava" onClick={calcularAhora}>{t["niv.calcular"]}</button>
+        <button type="button" className="btn btn-borde" onClick={() => { setE(ENTRADAS_VACIAS); setCalculado(null); try { localStorage.removeItem(CLAVE); } catch {} }}>{t["niv.borrar"]}</button>
       </div>
-      {calculado && !calculado.ok && <p className="aviso-error" role="alert">{calculado.error}</p>}
+      {calculado && !calculado.ok && <p className="aviso-error" role="alert">{tx(t, calculado.error)}</p>}
 
       {r && nv && (
         <section id="resultado" className="tarjeta grid gap-4 !border-2" style={{ borderColor: nv.color }} aria-live="polite">
           <div>
-            <p className="text-sm text-suave">Tu nivel</p>
+            <p className="text-sm text-suave">{t["niv.tuNivel"]}</p>
             <p className="titulo text-4xl" style={{ color: nv.color }}>{nv.nombre}{r.subnivel ? ` ${r.subnivel}` : ""}</p>
-            <p className="text-suave">{nv.etapa}</p>
+            <p className="text-suave">{t[`entrenar.etapa.${nv.clave}` as ClaveTexto]}</p>
           </div>
-          <ul className="grid gap-2" aria-label="Nivel por patrón">
+          <ul className="grid gap-2" aria-label={t["niv.porPatron"]}>
             {r.patrones.map((p) => {
               const pn = p.idx === null ? null : NIVELES[p.idx];
               return (
                 <li key={p.clave} className="grid gap-1">
                   <div className="flex justify-between text-sm">
-                    <span>{p.nombre}{r.atrasados.includes(p.nombre) ? " · atrasado" : ""}</span>
-                    <span style={{ color: pn?.color }}>{pn ? pn.nombre : "Sin medir"}</span>
+                    <span>{tx(t, `niv.p.${p.clave}`)}{r.atrasados.includes(p.clave) ? ` · ${t["niv.atrasado"]}` : ""}</span>
+                    <span style={{ color: pn?.color }}>{pn ? pn.nombre : t["niv.sinMedir"]}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-bg">
                     <div className="h-full rounded-full" style={{ width: p.idx === null ? 0 : `${((p.idx + 1) / 5) * 100}%`, background: pn?.color }} />
@@ -221,19 +241,19 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
             })}
           </ul>
           <div className="rounded-lg border border-borde p-3">
-            <p className="text-sm text-suave">Tu punto de partida en CalisteniaGO</p>
-            <p className="text-lg font-bold">{r.destino.etiqueta}</p>
-            <p className="text-sm text-suave">{r.destino.detalle}</p>
+            <p className="text-sm text-suave">{t["niv.partida"]}</p>
+            <p className="text-lg font-bold">{tx(t, `niv.d.${r.destino}.e`)}</p>
+            <p className="text-sm text-suave">{tx(t, `niv.d.${r.destino}.d`)}</p>
           </div>
-          {r.avisos.map((a, i) => <p key={i} className="aviso-ok">{a}</p>)}
-          <p className="text-xs text-suave">Resultado declarado: se basa en lo que tú indicaste. Más adelante podrás verificarlo con la cámara.</p>
+          {r.avisos.map((a, i) => <p key={i} className="aviso-ok">{textoAviso(t, a)}</p>)}
+          <p className="text-xs text-suave">{t["niv.declarado"]}</p>
 
           {conSesion ? (
             <button type="button" className="btn btn-lava justify-self-start" onClick={guardar} disabled={pendiente}>
-              {pendiente ? "Guardando…" : "Guardar mi nivel en mi perfil"}
+              {pendiente ? t["niv.guardando"] : t["niv.guardar"]}
             </button>
           ) : (
-            <Link href="/entrar?siguiente=/nivelador" className="btn btn-lava justify-self-start">Entrar para guardar mi nivel</Link>
+            <Link href="/entrar?siguiente=/nivelador" className="btn btn-lava justify-self-start">{t["niv.entrarGuardar"]}</Link>
           )}
           {mensaje && <p className={mensaje.tipo === "ok" ? "aviso-ok" : "aviso-error"} role="status">{mensaje.texto}</p>}
         </section>
