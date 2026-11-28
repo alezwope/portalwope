@@ -368,3 +368,9 @@ grant execute on function public.records_de(text) to authenticated;
 grant execute on function public.mi_progreso(text) to authenticated;
 revoke all on table public.verificaciones from anon;
 revoke all on table public.habilidades from anon;
+
+-- Ajustes posteriores (aplicados como f13b y f13c):
+--   alter function interno.idx_nivel(text) set search_path = '';
+--   grant select on table public.habilidades to authenticated;   -- sin este permiso el árbol salía vacío
+-- Nota: public.para_verificar se aplicó con la variante que calcula `antiguo` (cuenta con 3+ días) una sola vez;
+-- la definición vigente es la de Supabase.
