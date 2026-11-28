@@ -32,6 +32,7 @@ export const SECCIONES_ADMIN: { href: string; nombre: string; permiso?: string; 
   { href: "/admin/sugerencias", nombre: "Sugerencias", permiso: "sugerencias" },
   { href: "/admin/insignias", nombre: "Insignias", permiso: "insignias" },
   { href: "/admin/modulos", nombre: "Módulos", permiso: "modulos" },
+  { href: "/admin/textos", nombre: "Textos", permiso: "textos" },
   { href: "/admin/ajustes", nombre: "Ajustes", permiso: "ajustes" },
   { href: "/admin/auditoria", nombre: "Historial", permiso: "auditoria" },
   { href: "/admin/equipo", nombre: "Equipo", soloSuper: true },

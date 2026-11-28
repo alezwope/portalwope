@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { textos } from "@/lib/i18n/servidor";
+import { rellenar } from "@/lib/i18n/diccionarios";
 import Link from "next/link";
 import { misPaginas, requerirPerfil } from "@/lib/sesion";
 import IntencionPagina from "@/components/IntencionPagina";
@@ -6,12 +8,15 @@ import { OBJETIVOS, nivelDe, type Objetivo } from "@/lib/catalogos";
 import Feed from "@/components/Feed";
 import type { ItemFeed } from "@/lib/social";
 
-export const metadata: Metadata = { title: "Inicio" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await textos()).t["inicio.titulo"] };
+}
 
 export default async function PanelInicio() {
   const { supabase, perfil } = await requerirPerfil();
   const paginas = await misPaginas();
   const nivel = nivelDe(perfil.nivel);
+  const { t } = await textos();
 
   const [{ count: marcas }, { count: vinculos }, { data: avisos }, { data: feed }] = await Promise.all([
     supabase.from("marcas").select("id", { count: "exact", head: true }).eq("usuario_id", perfil.id),
@@ -21,9 +26,9 @@ export default async function PanelInicio() {
   ]);
 
   const pasos = [
-    { hecho: !!nivel, texto: "Elige tu nivel", detalle: "Así te mostramos lo que te sirve.", href: "/panel/perfil" },
-    { hecho: !!marcas, texto: "Registra tus primeras marcas", detalle: "Tus máximos de repeticiones: tu punto de partida.", href: "/panel/perfil#entrenamiento" },
-    { hecho: !!vinculos, texto: "Encuentra un entrenador", detalle: "Opcional: alguien que te guíe nivel por nivel.", href: "/panel/comunidad" },
+    { hecho: !!nivel, texto: t["inicio.paso1"], detalle: t["inicio.paso1d"], href: "/panel/perfil" },
+    { hecho: !!marcas, texto: t["inicio.paso2"], detalle: t["inicio.paso2d"], href: "/panel/perfil#entrenamiento" },
+    { hecho: !!vinculos, texto: t["inicio.paso3"], detalle: t["inicio.paso3d"], href: "/panel/comunidad" },
   ];
   const pendientes = pasos.filter((p) => !p.hecho);
 
@@ -31,20 +36,20 @@ export default async function PanelInicio() {
     <div className="grid gap-6">
       <IntencionPagina tiposQueTiene={paginas.map((p) => p.tipo)} />
       <header>
-        <h1 className="text-3xl">¡Hola, @{perfil.alias}!</h1>
+        <h1 className="text-3xl">{rellenar(t["inicio.hola"], { alias: perfil.alias ?? "" })}</h1>
         <p className="text-suave">
           {nivel ? (
-            <>Nivel <strong style={{ color: nivel.color }}>{nivel.nombre}</strong></>
+            <>{t["inicio.nivel"]} <strong style={{ color: nivel.color }}>{nivel.nombre}</strong></>
           ) : (
-            "Aún sin nivel"
+            t["inicio.sinNivel"]
           )}
-          {perfil.objetivo && <> · Objetivo: {OBJETIVOS[perfil.objetivo as Objetivo]}</>}
+          {perfil.objetivo && <> · {t["inicio.objetivo"]}: {OBJETIVOS[perfil.objetivo as Objetivo]}</>}
         </p>
       </header>
 
       {pendientes.length > 0 && (
         <section className="tarjeta">
-          <h2 className="text-xl mb-3">Tus primeros pasos</h2>
+          <h2 className="text-xl mb-3">{t["inicio.pasos"]}</h2>
           <ol className="grid gap-2">
             {pasos.map((p) => (
               <li key={p.texto}>
@@ -63,7 +68,7 @@ export default async function PanelInicio() {
 
       {(avisos ?? []).length > 0 && (
         <section className="tarjeta">
-          <h2 className="text-xl mb-3">Avisos</h2>
+          <h2 className="text-xl mb-3">{t["inicio.avisos"]}</h2>
           <ul className="grid gap-2">
             {(avisos ?? []).map((a) => (
               <li key={a.id}>
@@ -81,23 +86,23 @@ export default async function PanelInicio() {
       <div className="grid gap-4 md:grid-cols-2">
         <Link href="/panel/entrenar" className="tarjeta hover:!border-lava">
           <h2 className="text-xl text-lava">CalisteniaGO</h2>
-          <p className="text-suave">Tu programa guiado, nivel por nivel. Próximamente.</p>
+          <p className="text-suave">{t["inicio.goTexto"]}</p>
         </Link>
         {paginas.some((p) => p.tipo === "entrenador") ? (
           <Link href="/panel/entrenador" className="tarjeta hover:!border-lava">
-            <h2 className="text-xl text-lava">Tu panel de entrenador</h2>
-            <p className="text-suave">Solicitudes, alumnos, escuela e invitaciones.</p>
+            <h2 className="text-xl text-lava">{t["inicio.panelEnt"]}</h2>
+            <p className="text-suave">{t["inicio.panelEntTexto"]}</p>
           </Link>
         ) : (
           <Link href="/panel/perfil#paginas" className="tarjeta hover:!border-lava">
-            <h2 className="text-xl text-lava">¿Eres entrenador?</h2>
-            <p className="text-suave">Crea tu página de entrenador: hasta 100 alumnos gratis.</p>
+            <h2 className="text-xl text-lava">{t["inicio.esEnt"]}</h2>
+            <p className="text-suave">{t["inicio.esEntTexto"]}</p>
           </Link>
         )}
       </div>
 
       {perfil.es_admin && (
-        <Link href="/admin" className="btn btn-borde justify-self-start">Administración</Link>
+        <Link href="/admin" className="btn btn-borde justify-self-start">{t["inicio.admin"]}</Link>
       )}
     </div>
   );
