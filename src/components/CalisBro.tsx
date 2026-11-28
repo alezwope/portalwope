@@ -8,9 +8,10 @@ import { OBJETIVOS, nivelDe } from "@/lib/catalogos";
 import { nomCat, rellenar, type ClaveTexto } from "@/lib/i18n/diccionarios";
 import { useTextos } from "@/components/Idioma";
 import Avatar from "@/components/Avatar";
+import ReportarBloquear from "@/components/ReportarBloquear";
 
-type Tarjeta = { id: string; alias: string; avatar_url: string | null; nivel: string | null; objetivo: string | null; ciudad: string | null; modalidad: string; horarios: string[]; nota: string | null };
-type Mi = { activo: boolean; modalidad: string; horarios: string[]; nota: string | null };
+type Tarjeta = { id: string; alias: string; avatar_url: string | null; nivel: string | null; objetivo: string | null; ciudad: string | null; modalidad: string; horarios: string[]; nota: string | null; km: number | null };
+type Mi = { activo: boolean; modalidad: string; horarios: string[]; nota: string | null; con_ubicacion: boolean; suspendido: boolean; ampliado: boolean; tarjetas_hoy: number; tarjetas_max: number; conexiones: number; conexiones_max: number };
 type Persona = { id: string; alias: string; avatar_url: string | null; nivel: string | null; objetivo: string | null; ciudad: string | null };
 type Tab = "descubrir" | "matches" | "perfil";
 
@@ -44,9 +45,11 @@ export default function CalisBro() {
             className={`rounded-full border px-3 py-1 text-sm ${tab === x.id ? "border-lava text-lava" : "border-borde text-suave"}`}>{x.texto}</button>
         ))}
       </div>
+      {mi.suspendido && <p className="aviso-error" role="alert">{t["cb.suspendido"]}</p>}
       {tab === "descubrir" && <Descubrir activo={mi.activo} irPerfil={() => setTab("perfil")} />}
       {tab === "matches" && <Matches />}
       {tab === "perfil" && <MiPerfil mi={mi} onGuardado={cargarMi} />}
+      <p className="text-xs text-suave">{rellenar(t["cb.uso"], { t: String(mi.tarjetas_hoy), tm: String(mi.tarjetas_max), c: String(mi.conexiones), cm: String(mi.conexiones_max) })}{!mi.ampliado && ` ${t["cb.usoInsignia"]}`}</p>
     </div>
   );
 }
@@ -93,6 +96,7 @@ function Descubrir({ activo, irPerfil }: { activo: boolean; irPerfil: () => void
       <div className="tarjeta grid gap-3 text-center">
         <p className="text-3xl" aria-hidden>🤝</p>
         <p className="text-lg font-bold">{rellenar(t["cb.matchTitulo"], { alias: match })}</p>
+        <p className="text-xs text-suave">🛡️ {t["cb.consejo"]}</p>
         <div className="flex flex-wrap justify-center gap-2">
           <Link href={`/panel/mensajes/${match}`} className="btn btn-lava">{t["cb.escribir"]}</Link>
           <Link href="/panel/eventos" className="btn btn-borde">{t["cb.armarJuntada"]}</Link>
@@ -121,7 +125,7 @@ function Descubrir({ activo, irPerfil }: { activo: boolean; irPerfil: () => void
           <div className="min-w-0">
             <p className="text-xl font-bold">@{c.alias}</p>
             <p className="text-sm text-suave">
-              {nv && <span style={{ color: nv.color }}>{nv.nombre}</span>}{c.ciudad ? ` · ${c.ciudad}` : ""}
+              {nv && <span style={{ color: nv.color }}>{nv.nombre}</span>}{c.ciudad ? ` · ${c.ciudad}` : ""}{c.km != null ? ` · ${rellenar(t["cb.distancia"], { km: String(c.km) })}` : ""}
             </p>
           </div>
         </div>
@@ -135,6 +139,7 @@ function Descubrir({ activo, irPerfil }: { activo: boolean; irPerfil: () => void
           <button className="btn btn-borde flex-1" disabled={ocupado} onClick={() => votar(c, "paso")}>✕ {t["cb.paso"]}</button>
           <button className="btn btn-lava flex-1" disabled={ocupado} onClick={() => votar(c, "interesa")}>💪 {t["cb.interesa"]}</button>
         </div>
+        <ReportarBloquear key={c.id} id={c.id} alias={c.alias} alBloquear={() => { const resto = (cartas ?? []).filter((x) => x.id !== c.id); setCartas(resto); if (resto.length === 0) cargar(); }} />
       </article>
     </div>
   );
@@ -170,13 +175,22 @@ function MiPerfil({ mi, onGuardado }: { mi: Mi; onGuardado: () => void }) {
   const [modalidad, setModalidad] = useState(mi.modalidad);
   const [horarios, setHorarios] = useState<string[]>(mi.horarios);
   const [nota, setNota] = useState(mi.nota ?? "");
+  const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
   const alternar = (h: string) => setHorarios((p) => (p.includes(h) ? p.filter((x) => x !== h) : [...p, h]));
 
+  function ubicar() {
+    setMsg(null);
+    navigator.geolocation?.getCurrentPosition(
+      (g) => setPos({ lat: g.coords.latitude, lng: g.coords.longitude }),
+      () => setMsg({ ok: false, texto: t["cb.ubicacionError"] }),
+      { maximumAge: 600000, timeout: 10000 },
+    );
+  }
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
-    const { error } = await crearCliente().rpc("calisbro_guardar", { p_activo: activo, p_modalidad: modalidad, p_horarios: horarios, p_nota: nota });
+    const { error } = await crearCliente().rpc("calisbro_guardar", { p_activo: activo, p_modalidad: modalidad, p_horarios: horarios, p_nota: nota, p_lat: pos?.lat ?? null, p_lng: pos?.lng ?? null });
     if (error) return setMsg({ ok: false, texto: mensajeError(error) });
     setMsg({ ok: true, texto: t["cb.guardado"] });
     onGuardado();
@@ -201,6 +215,10 @@ function MiPerfil({ mi, onGuardado }: { mi: Mi; onGuardado: () => void }) {
           ))}
         </div>
       </fieldset>
+      <div className="grid gap-1 text-sm">
+        <button type="button" className="btn btn-borde justify-self-start !py-1" onClick={ubicar}>📍 {pos || mi.con_ubicacion ? t["cb.ubicacionOk"] : t["cb.ubicacion"]}</button>
+        <span className="text-xs text-suave">{t["cb.ubicacionAyuda"]}</span>
+      </div>
       <input className="campo" maxLength={140} value={nota} onChange={(e) => setNota(e.target.value)} placeholder={t["cb.nota"]} aria-label={t["cb.nota"]} />
       {msg && <p className={msg.ok ? "aviso-ok" : "aviso-error"} role="status">{msg.texto}</p>}
       <button className="btn btn-lava justify-self-start">{t["cb.guardar"]}</button>

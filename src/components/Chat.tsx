@@ -6,6 +6,8 @@ import { crearCliente } from "@/lib/supabase/client";
 import { hace, mensajeError } from "@/lib/social";
 import { useTextos } from "@/components/Idioma";
 import Avatar from "@/components/Avatar";
+import { useRouter } from "next/navigation";
+import ReportarBloquear from "@/components/ReportarBloquear";
 
 type Datos = {
   otro: { id: string; alias: string; avatar_url: string | null; nivel: string | null };
@@ -15,6 +17,7 @@ type Datos = {
 
 export default function Chat({ alias }: { alias: string }) {
   const { t, idioma } = useTextos();
+  const router = useRouter();
   const [d, setD] = useState<Datos | null | undefined>(undefined);
   const [texto, setTexto] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
@@ -55,6 +58,7 @@ export default function Chat({ alias }: { alias: string }) {
         <Avatar alias={d.otro.alias} url={d.otro.avatar_url} nivel={d.otro.nivel} />
         <Link href={`/panel/u/${d.otro.alias}`} className="font-bold hover:text-lava">@{d.otro.alias}</Link>
       </header>
+      <div className="tarjeta !py-2"><ReportarBloquear id={d.otro.id} alias={d.otro.alias} alBloquear={() => router.push("/panel/mensajes")} /></div>
       <ul className="tarjeta grid max-h-[55dvh] gap-2 overflow-y-auto" aria-live="polite">
         {d.mensajes.length === 0 && <li className="text-suave">{t["msg.primero"]}</li>}
         {d.mensajes.map((m) => (

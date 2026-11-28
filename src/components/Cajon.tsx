@@ -8,7 +8,7 @@ import MenuPersianas from "@/components/MenuPersianas";
 import { useTextos } from "@/components/Idioma";
 
 /** Botón ☰ y cajón lateral del teléfono con el mismo menú de persianas. */
-export default function Cajon({ alias, entrenador }: { alias: string; entrenador: boolean }) {
+export default function Cajon({ alias, entrenador, sinLeer = 0 }: { alias: string; entrenador: boolean; sinLeer?: number }) {
   const { t } = useTextos();
   const [abierto, setAbierto] = useState(false);
   const ruta = usePathname();
@@ -41,7 +41,7 @@ export default function Cajon({ alias, entrenador }: { alias: string; entrenador
               </div>
               <button type="button" onClick={() => setAbierto(false)} className="px-2 text-suave" aria-label={t["comun.cerrar"]}>✕</button>
             </div>
-            <MenuPersianas alias={alias} entrenador={entrenador} alNavegar={() => setAbierto(false)} />
+            <MenuPersianas alias={alias} entrenador={entrenador} sinLeer={sinLeer} alNavegar={() => setAbierto(false)} />
           </aside>
         </div>,
         document.body,

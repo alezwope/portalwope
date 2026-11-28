@@ -17,13 +17,15 @@ import { misPaginas, requerirPerfil } from "@/lib/sesion";
 /** Esqueleto de la app (plantilla definitiva): persianas a la izquierda en computadora; cajón, barra inferior y bíceps en teléfono. */
 export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
   const { supabase, perfil } = await requerirPerfil();
-  const [paginas, { t }, equipo, { count }, { data: tiposCat }] = await Promise.all([
+  const [paginas, { t }, equipo, { count }, { data: tiposCat }, { data: sinLeerDato }] = await Promise.all([
     misPaginas(),
     textos(),
     equipoActual(),
     supabase.from("notificaciones").select("id", { count: "exact", head: true }).eq("leida", false),
     supabase.from("catalogo_items").select("clave, datos").eq("catalogo", "tipos_comentario").eq("activo", true).order("orden"),
+    supabase.rpc("mensajes_sin_leer"),
   ]);
+  const sinLeer = Number(sinLeerDato ?? 0);
   const entrenador = paginas.find((p) => p.tipo === "entrenador");
   const alias = perfil.alias ?? "yo";
   const esEquipo = equipo.esSuper || equipo.permisos.length > 0;
@@ -45,6 +47,21 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
     </Link>
   );
 
+  const mensajes = (
+    <Link
+      href="/panel/mensajes"
+      className="relative rounded-full border border-borde bg-card px-2.5 py-1 text-sm"
+      aria-label={sinLeer ? `${t["menu.universo.mensajes"]}: ${sinLeer}` : t["menu.universo.mensajes"]}
+    >
+      <span aria-hidden>💬</span>
+      {sinLeer > 0 && (
+        <span className="num absolute -right-1 -top-1 min-w-5 rounded-full bg-lava px-1 text-center text-xs font-bold text-white">
+          {sinLeer > 9 ? "9+" : sinLeer}
+        </span>
+      )}
+    </Link>
+  );
+
   return (
     <div className="flex min-h-screen">
       <SincronizarPreferencias idioma={esIdioma(p.idioma) ? p.idioma : "es"} tema={p.tema ?? "oscuro"} />
@@ -59,7 +76,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
           </div>
         </Link>
         <div className="flex-1 overflow-y-auto p-3">
-          <MenuPersianas alias={alias} entrenador={!!entrenador} />
+          <MenuPersianas alias={alias} entrenador={!!entrenador} sinLeer={sinLeer} />
         </div>
         <div className="grid gap-2 border-t border-borde p-3">
           {esEquipo && (
@@ -77,7 +94,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
         <header className="sticky top-0 z-20 border-b border-borde bg-bg">
           <div className="flex items-center justify-between gap-2 px-3 py-2 md:px-6">
             <div className="flex min-w-0 items-center gap-2">
-              <Cajon alias={alias} entrenador={!!entrenador} />
+              <Cajon alias={alias} entrenador={!!entrenador} sinLeer={sinLeer} />
               <Link href="/panel" className="flex items-center gap-1.5 md:hidden" aria-label="UniBars">
                 <Image src="/brand/isotipo-96.png" alt="" width={32} height={32} className="logo-fundido" />
                 <span className="titulo hidden text-sm tracking-widest min-[380px]:inline">UNIBARS</span>
@@ -91,6 +108,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
               <Link href="/panel/sugerencias" className="hidden rounded-full border border-borde bg-card px-2.5 py-1 text-sm sm:inline-block" aria-label={t["app.sugerencias"]} title={t["app.sugerencias"]}>
                 💡
               </Link>
+              {mensajes}
               {avisos}
               <div className="hidden sm:block"><Preferencias /></div>
               <div className="sm:hidden"><Preferencias compacto /></div>

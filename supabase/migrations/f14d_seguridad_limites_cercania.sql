@@ -1,0 +1,8 @@
+-- f14d (aplicada en Supabase vía apply_migration): seguridad y límites de CalisBro/mensajes.
+-- · beneficio calisbro_ampliado (persona, entrenador) y ajustes editables en /admin/ajustes:
+--   cb_tarjetas_dia_gratis/insignia, cb_conexiones_gratis/insignia, cb_radio_km,
+--   msg_dia_gratis/insignia, msg_rafaga_max/minutos, reportes_suspender_calisbro.
+-- · calisbro_perfil: lat, lng (aprox. 2 decimales), suspendido. calisbro_mazo ordena por cercanía (cubetas de 5 km).
+-- · reportar() acepta 'persona' y 'mensaje'; con N reportes distintos se suspende el CalisBro.
+-- · admin_reportes / admin_resolver_reporte / admin_calisbro_suspension; CalisBro exige declara_mayor_edad.
+-- Nota técnica: en plpgsql, "if x >= case when … then" rompe el analizador; calcular el límite en una variable antes.

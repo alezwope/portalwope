@@ -6,6 +6,7 @@ import { crearCliente } from "@/lib/supabase/client";
 import { MOTIVOS_REPORTE, mensajeError } from "@/lib/social";
 import { useTextos } from "@/components/Idioma";
 import { rellenar, type ClaveTexto } from "@/lib/i18n/diccionarios";
+import CompartirPlan from "@/components/CompartirPlan";
 import { MapaEventos, SelectorPin, centroCiudad, type Punto } from "@/components/MapaJuntadas";
 
 type Evento = { id: string; titulo: string; descripcion: string | null; ciudad: string; lugar: string; inicia_en: string; organiza: string; crew_id: string | null; es_mio: boolean; cupo: number | null; voy: number; yo_voy: boolean; alcance: "comunidad" | "crew" | "escuela"; lat: number | null; lng: number | null };
@@ -139,6 +140,7 @@ export default function Juntadas() {
                       <button onClick={() => setReportando(reportando === e.id ? null : e.id)} className="text-suave hover:text-lava">{t["jun.reportar"]}</button>
                     )}
                   </div>
+                  {e.yo_voy && <CompartirPlan texto={rellenar(t["seg.planTexto"], { titulo: e.titulo, cuando: cuando(e.inicia_en), lugar: e.lugar })} />}
                   {reportando === e.id && (
                     <div className="flex flex-wrap gap-2" role="group">
                       {MOTIVOS_REPORTE.map((m, i) => (

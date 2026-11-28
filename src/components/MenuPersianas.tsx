@@ -17,7 +17,7 @@ function estaActivo(ruta: string, href: string) {
 }
 
 /** Menú de persianas (estilo WordPress de la plantilla): una sección abierta a la vez. */
-export default function MenuPersianas({ alias, entrenador, alNavegar }: { alias: string; entrenador: boolean; alNavegar?: () => void }) {
+export default function MenuPersianas({ alias, entrenador, sinLeer = 0, alNavegar }: { alias: string; entrenador: boolean; sinLeer?: number; alNavegar?: () => void }) {
   const { t } = useTextos();
   const ruta = usePathname();
   const activa = MENU.find((s) => s.items.some((i) => estaActivo(ruta, rutaDe(i, alias))))?.clave ?? "universo";
@@ -59,6 +59,7 @@ export default function MenuPersianas({ alias, entrenador, alNavegar }: { alias:
                         }`}
                       >
                         <span>{t[i.texto]}</span>
+                        {i.clave === "mensajes" && sinLeer > 0 && <span className="num min-w-5 rounded-full bg-lava px-1 text-center text-xs font-bold text-white" aria-label={`${sinLeer}`}>{sinLeer > 9 ? "9+" : sinLeer}</span>}
                         {i.pronto && <span className="shrink-0 text-xs opacity-70" title={t["comun.pronto"]} aria-label={t["comun.pronto"]}>⏳</span>}
                       </Link>
                     </li>
