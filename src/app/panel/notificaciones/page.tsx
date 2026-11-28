@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requerirPerfil } from "@/lib/sesion";
 import { textos } from "@/lib/i18n/servidor";
 import MarcarLeidas from "@/components/MarcarLeidas";
+import EnlaceAviso from "@/components/EnlaceAviso";
 import { rellenar } from "@/lib/i18n/diccionarios";
 import { formatoValor } from "@/lib/habilidades";
 
@@ -53,7 +53,7 @@ export default async function Notificaciones() {
                 {n.enlace && (
                   <>
                     {" · "}
-                    <Link href={n.enlace} className="text-dorado underline">{t["entrenar.abrir"]}</Link>
+                    <EnlaceAviso id={n.id} href={n.enlace} leida={n.leida}>{t["entrenar.abrir"]}</EnlaceAviso>
                   </>
                 )}
               </p>

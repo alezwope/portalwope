@@ -1,3 +1,4 @@
+import PorWope from "@/components/PorWope";
 import Image from "next/image";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
@@ -67,7 +68,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
           <Link href="/panel/mapa" className="btn btn-borde !py-1.5 text-sm">
             <span className="h-2 w-2 animate-pulse rounded-full bg-ok" aria-hidden /> {t["menu.mapa.vivo"]}
           </Link>
-          <p className="text-center text-[11px] text-suave">{t["marca.by"]}</p>
+          <p className="text-center text-[11px] text-suave"><PorWope texto={t["marca.by"]} /></p>
         </div>
       </aside>
 

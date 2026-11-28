@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import Cabecera from "@/components/Cabecera";
+import PorWope from "@/components/PorWope";
 import FormularioAcceso from "@/components/FormularioAcceso";
 import { NIVELES } from "@/lib/catalogos";
 import { textos } from "@/lib/i18n/servidor";
@@ -85,7 +86,7 @@ export default async function Puerta(props: PageProps<"/">) {
 
           <div className="flex flex-col items-center gap-3">
             <FormularioAcceso siguiente="/panel" modoInicial={sp.crear ? "crear" : "entrar"} />
-            <p className="text-sm text-suave">{t["marca.by"]}</p>
+            <p className="text-sm text-suave"><PorWope texto={t["marca.by"]} /></p>
           </div>
         </section>
 
@@ -125,7 +126,7 @@ export default async function Puerta(props: PageProps<"/">) {
       </main>
 
       <footer className="border-t border-borde py-6 text-center text-xs text-suave">
-        © {new Date().getFullYear()} UniBars · {t["marca.by"]} · {t["comun.mayores18"]}
+        © {new Date().getFullYear()} UniBars · <PorWope texto={t["marca.by"]} /> · {t["comun.mayores18"]}
         <br />
         {t["comun.osm"]}
       </footer>

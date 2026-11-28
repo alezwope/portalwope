@@ -1,0 +1,3 @@
+-- Fase 1.4 (arreglos): juntadas con alcance (comunidad/crew/escuela) y pin. YA APLICADA en Supabase como f14b_juntadas_alcance_pin.
+-- Agrega eventos.lat/lng/alcance/pagina_id, interno.puede_ver_evento, crear_juntada (12 args), asistir con permiso y mi_zona(p_lat,p_lng,p_km).
+-- Definiciones completas: pg_get_functiondef en Supabase.

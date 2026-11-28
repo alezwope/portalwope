@@ -398,7 +398,7 @@ export default function MapaParques({ alto = "calc(100dvh - 8rem)" }: { alto?: s
       {(aviso || error) && <p className={error ? "aviso-error" : "aviso-ok"} role="status">{error || aviso}</p>}
 
       <div className="relative overflow-hidden rounded-2xl border border-borde" style={{ height: alto, minHeight: 360 }}>
-        <div ref={contenedor} className="absolute inset-0" aria-label={t["mapa.aria"]} />
+        <div ref={contenedor} className="absolute inset-0" style={{ position: "absolute", inset: 0 }} aria-label={t["mapa.aria"]} />
         {cargandoMapa && (
           <div className="absolute inset-0 grid place-items-center bg-card text-suave">{t["mapa.cargando"]}</div>
         )}

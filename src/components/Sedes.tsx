@@ -170,7 +170,7 @@ function FormularioSede({ paginaId, ubicacion, onListo, onCancelar }: { paginaId
         )}
       </div>
       <div className="relative overflow-hidden rounded-xl border border-borde" style={{ height: 300 }}>
-        <div ref={contenedor} className="absolute inset-0" aria-label="Mapa para marcar la sede" />
+        <div ref={contenedor} className="absolute inset-0" style={{ position: "absolute", inset: 0 }} aria-label="Mapa para marcar la sede" />
       </div>
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <button type="button" className="btn btn-borde !py-1" onClick={miUbicacion}>📍 Usar mi ubicación actual</button>
