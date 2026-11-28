@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Cabecera from "@/components/Cabecera";
+import { TarjetaItem, type ItemMercado } from "@/components/Mercado";
 import SolicitarEntrenamiento from "@/components/SolicitarEntrenamiento";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { MODALIDADES, NIVELES, OBJETIVOS, TIPOS_PAGINA, ESTADOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
@@ -49,6 +50,8 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
 
   const { data: sedesRaw } = await supabase.rpc("sedes_pagina", { p_pagina: pagina.id });
   const sedes = (sedesRaw ?? []) as { id: string; nombre: string; horario: string | null; ciudad: string | null; lat: number; lng: number }[];
+  const { data: itemsRaw } = user ? await supabase.rpc("mercado_listar", { p_seccion: null, p_pais: "", p_q: "", p_pagina: pagina.id, p_offset: 0 }) : { data: [] };
+  const items = ((itemsRaw ?? []) as ItemMercado[]).filter((i) => i.estado === "activo");
   const recibe = pagina.tipo !== "tienda" && pagina.estado === "activa";
   const volver = `/e/${pagina.slug}`;
 
@@ -81,6 +84,13 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {items.length > 0 && (
+          <section className="grid gap-3">
+            <h2 className="text-xl text-lava">Catálogo</h2>
+            <div className="grid gap-4 sm:grid-cols-2">{items.map((i) => <TarjetaItem key={i.id} i={i} />)}</div>
           </section>
         )}
 

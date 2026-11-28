@@ -53,6 +53,7 @@ export const MENU: SeccionMenu[] = [
     items: [
       { clave: "mis-entrenadores", texto: "menu.escuela.mis", href: "/panel/comunidad#mis-entrenadores" },
       { clave: "coachya", texto: "menu.escuela.coachya", href: "/panel/coachya" },
+      { clave: "mercado", texto: "menu.escuela.mercado", href: "/panel/mercado" },
       { clave: "buscar-entrenador", texto: "menu.escuela.buscar", href: "/panel/comunidad#buscar-entrenador" },
       { clave: "panel-entrenador", texto: "menu.escuela.panel", href: "/panel/entrenador", soloEntrenador: true },
       { clave: "crear-pagina", texto: "menu.escuela.crear", href: "/panel/perfil#paginas", sinEntrenador: true },
