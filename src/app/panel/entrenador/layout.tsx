@@ -36,7 +36,7 @@ export default async function EntrenadorLayout({ children }: LayoutProps<"/panel
         </div>
       </div>
       <nav aria-label="Secciones del panel" className="flex flex-wrap gap-2 text-sm">
-        {[["/panel/entrenador", "Solicitudes"], ["/panel/entrenador/alumnos", "Alumnos"], ["/panel/entrenador/planes", "Planes"], ["/panel/entrenador/grupos", "Grupos"], ["/panel/entrenador/invitar", "Invitar"]].map(([href, texto]) => (
+        {[["/panel/entrenador", "Solicitudes"], ["/panel/entrenador/alumnos", "Alumnos"], ["/panel/entrenador/planes", "Planes"], ["/panel/entrenador/grupos", "Grupos"], ["/panel/entrenador/coachya", "CoachYa!"], ["/panel/entrenador/invitar", "Invitar"]].map(([href, texto]) => (
           <Link key={href} href={href} className="btn btn-borde !px-3 !py-1">{texto}</Link>
         ))}
       </nav>
