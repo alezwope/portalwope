@@ -104,6 +104,7 @@ export default function Amigos({ inicial }: { inicial: MisAmigos }) {
           <ul className="grid gap-2 md:grid-cols-2">
             {datos.amigos.map((r) => (
               <Fila key={r.amistad_id} p={r.persona}>
+                <Link href={`/panel/mensajes/${r.persona.alias}`} className="text-xs text-dorado hover:text-lava">💬 {t["msg.enviar"]}</Link>
                 <button className="text-xs text-suave hover:text-lava" onClick={() => llamar("amistad_quitar", { p_otro: r.persona.id })}>{t["amigos.quitar"]}</button>
               </Fila>
             ))}
@@ -117,6 +118,7 @@ export default function Amigos({ inicial }: { inicial: MisAmigos }) {
           <ul className="grid gap-2">
             {datos.enviadas.map((r) => (
               <Fila key={r.amistad_id} p={r.persona}>
+                <Link href={`/panel/mensajes/${r.persona.alias}`} className="text-xs text-dorado hover:text-lava">💬 {t["msg.enviar"]}</Link>
                 <button className="text-xs text-suave hover:text-lava" onClick={() => llamar("amistad_quitar", { p_otro: r.persona.id })}>{t["comun.cancelar"]}</button>
               </Fila>
             ))}

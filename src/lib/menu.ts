@@ -18,7 +18,8 @@ export const MENU: SeccionMenu[] = [
       { clave: "comunidad", texto: "menu.universo.comunidad", href: "/panel/comunidad" },
       { clave: "crews", texto: "menu.universo.crews", href: "/panel/crews" },
       { clave: "eventos", texto: "menu.universo.eventos", href: "/panel/eventos" },
-      { clave: "calisbro", texto: "menu.universo.calisbro", ...pronto("calisbro", "1.4") },
+      { clave: "calisbro", texto: "menu.universo.calisbro", href: "/panel/calisbro" },
+      { clave: "mensajes", texto: "menu.universo.mensajes", href: "/panel/mensajes" },
     ],
   },
   {
