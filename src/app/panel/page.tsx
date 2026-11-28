@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { textos } from "@/lib/i18n/servidor";
-import { rellenar } from "@/lib/i18n/diccionarios";
+import { nomCat, rellenar } from "@/lib/i18n/diccionarios";
 import Link from "next/link";
 import { misPaginas, requerirPerfil } from "@/lib/sesion";
 import IntencionPagina from "@/components/IntencionPagina";
@@ -43,7 +43,7 @@ export default async function PanelInicio() {
           ) : (
             t["inicio.sinNivel"]
           )}
-          {perfil.objetivo && <> · {t["inicio.objetivo"]}: {OBJETIVOS[perfil.objetivo as Objetivo]}</>}
+          {perfil.objetivo && <> · {t["inicio.objetivo"]}: {nomCat(t, "obj", perfil.objetivo, OBJETIVOS[perfil.objetivo as Objetivo])}</>}
         </p>
       </header>
 

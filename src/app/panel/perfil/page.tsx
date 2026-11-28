@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { nomCat } from "@/lib/i18n/diccionarios";
 import { textos } from "@/lib/i18n/servidor";
 import Link from "next/link";
 import { misPaginas, requerirPerfil } from "@/lib/sesion";
@@ -51,7 +52,7 @@ export default async function PaginaPerfil(props: PageProps<"/panel/perfil">) {
           <div key={p.id} className="tarjeta flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-bold">{TIPOS_PAGINA[p.tipo].icono} {p.nombre}</p>
-              <p className="text-sm text-suave">{TIPOS_PAGINA[p.tipo].nombre} · {ESTADOS_PAGINA[p.estado]}</p>
+              <p className="text-sm text-suave">{nomCat(tx, "tipo", p.tipo, TIPOS_PAGINA[p.tipo].nombre)} · {nomCat(tx, "estp", p.estado, ESTADOS_PAGINA[p.estado])}</p>
             </div>
             <div className="flex gap-2">
               <Link href={`/e/${p.slug}`} className="btn btn-borde !py-1.5">{tx["perfil.verPublica"]}</Link>

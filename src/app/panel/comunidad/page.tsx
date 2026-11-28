@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { textos } from "@/lib/i18n/servidor";
-import { rellenar } from "@/lib/i18n/diccionarios";
+import { nomCat, rellenar } from "@/lib/i18n/diccionarios";
 import Link from "next/link";
 import { requerirPerfil } from "@/lib/sesion";
 import { MODALIDADES, NIVELES, nivelDe, type Nivel } from "@/lib/catalogos";
@@ -93,7 +93,7 @@ export default async function Comunidad(props: PageProps<"/panel/comunidad">) {
                   <span className="font-bold text-lg">{e.nombre}</span>
                   <span className="text-sm text-suave">
                     {[e.ciudad, e.pais].filter(Boolean).join(", ") || t["comunidad.sinUbicacion"]}
-                    {e.modalidades.length > 0 && " · " + e.modalidades.map((m) => MODALIDADES[m as keyof typeof MODALIDADES]).join(", ")}
+                    {e.modalidades.length > 0 && " · " + e.modalidades.map((m) => nomCat(t, "mod", m, MODALIDADES[m as keyof typeof MODALIDADES])).join(", ")}
                   </span>
                   {e.atiende_niveles.length > 0 && (
                     <span className="flex flex-wrap gap-1 text-xs">

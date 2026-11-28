@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { crearCliente } from "@/lib/supabase/client";
+import { useTextos } from "@/components/Idioma";
+import { nomCat } from "@/lib/i18n/diccionarios";
 import { NIVELES, OBJETIVOS } from "@/lib/catalogos";
 import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 export default function FormularioOnboarding({ nombreInicial, siguiente }: { nombreInicial: string; siguiente: string }) {
+  const { t } = useTextos();
   const [alias, setAlias] = useState("");
   const [nombre, setNombre] = useState(nombreInicial);
   const [nivel, setNivel] = useState("");
@@ -83,7 +86,7 @@ export default function FormularioOnboarding({ nombreInicial, siguiente }: { nom
         ¿Qué buscas? (opcional)
         <select className="campo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)}>
           <option value="">Prefiero no decirlo ahora</option>
-          {Object.entries(OBJETIVOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {Object.entries(OBJETIVOS).map(([k, v]) => <option key={k} value={k}>{nomCat(t, "obj", k, v)}</option>)}
         </select>
       </label>
 

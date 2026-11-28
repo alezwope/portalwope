@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTextos } from "@/components/Idioma";
 import { crearCliente } from "@/lib/supabase/client";
 import { TIPOS_PAGINA, type TipoPagina } from "@/lib/catalogos";
+import { nomCat } from "@/lib/i18n/diccionarios";
 import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 export default function CrearPagina({ tipo, abiertoInicial = false }: { tipo: TipoPagina; abiertoInicial?: boolean }) {
@@ -39,14 +40,14 @@ export default function CrearPagina({ tipo, abiertoInicial = false }: { tipo: Ti
   if (!abierto)
     return (
       <button type="button" onClick={() => setAbierto(true)} className="tarjeta grid gap-1 text-left hover:!border-lava">
-        <span className="font-bold">{info.icono} {t["pag.crearDe"]} {info.nombre}</span>
-        <span className="text-sm text-suave">{info.resumen}</span>
+        <span className="font-bold">{info.icono} {t["pag.crearDe"]} {nomCat(t, "tipo", tipo, info.nombre)}</span>
+        <span className="text-sm text-suave">{nomCat(t, "tipoR", tipo, info.resumen)}</span>
       </button>
     );
 
   return (
     <form onSubmit={crear} className="tarjeta grid gap-3">
-      <p className="font-bold">{info.icono} {t["pag.nuevaDe"]} {info.nombre}</p>
+      <p className="font-bold">{info.icono} {t["pag.nuevaDe"]} {nomCat(t, "tipo", tipo, info.nombre)}</p>
       <label className="grid gap-1 text-sm">
         {t["pag.nombre"]}
         <input className="campo" required maxLength={60} value={nombre} onChange={(e) => setNombre(e.target.value)} autoFocus />

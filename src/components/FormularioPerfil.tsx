@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { crearCliente } from "@/lib/supabase/client";
 import type { Perfil } from "@/lib/sesion";
 import { useTextos } from "@/components/Idioma";
+import { nomCat } from "@/lib/i18n/diccionarios";
 import type { ClaveTexto } from "@/lib/i18n/diccionarios";
 import { NIVELES, OBJETIVOS } from "@/lib/catalogos";
 import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
@@ -78,7 +79,7 @@ export default function FormularioPerfil({ perfil }: { perfil: Perfil }) {
           {t["fperfil.objetivo"]}
           <select className="campo" value={objetivo} onChange={(e) => setObjetivo(e.target.value)}>
             <option value="">{t["fperfil.sinDef"]}</option>
-            {Object.entries(OBJETIVOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            {Object.entries(OBJETIVOS).map(([k, v]) => <option key={k} value={k}>{nomCat(t, "obj", k, v)}</option>)}
           </select>
         </label>
       </div>

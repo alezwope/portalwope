@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { crearCliente } from "@/lib/supabase/client";
 import type { Pagina } from "@/lib/sesion";
 import { MODALIDADES, NIVELES, OBJETIVOS } from "@/lib/catalogos";
+import { useTextos } from "@/components/Idioma";
+import { nomCat } from "@/lib/i18n/diccionarios";
 import SelectorUbicacion, { type Ubicacion } from "@/components/SelectorUbicacion";
 
 function Casillas({ titulo, opciones, valor, cambiar }: { titulo: string; opciones: [string, string][]; valor: string[]; cambiar: (v: string[]) => void }) {
@@ -27,6 +29,7 @@ function Casillas({ titulo, opciones, valor, cambiar }: { titulo: string; opcion
 }
 
 export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
+  const { t } = useTextos();
   const router = useRouter();
   const [nombre, setNombre] = useState(pagina.nombre);
   const [bio, setBio] = useState(pagina.bio ?? "");
@@ -87,9 +90,9 @@ export default function FormularioFicha({ pagina }: { pagina: Pagina }) {
         Enlace de contacto (opcional)
         <input className="campo" type="url" maxLength={200} value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder="Instagram, WhatsApp, YouTube, Facebook o Telegram" />
       </label>
-      <Casillas titulo="Modalidades" opciones={Object.entries(MODALIDADES)} valor={modalidades} cambiar={setModalidades} />
+      <Casillas titulo="Modalidades" opciones={Object.entries(MODALIDADES).map(([k, v]) => [k, nomCat(t, "mod", k, v)])} valor={modalidades} cambiar={setModalidades} />
       <Casillas titulo="Niveles que entrenas" opciones={NIVELES.map((n) => [n.clave, n.nombre])} valor={niveles} cambiar={setNiveles} />
-      <Casillas titulo="Objetivos con los que ayudas" opciones={Object.entries(OBJETIVOS)} valor={objetivos} cambiar={setObjetivos} />
+      <Casillas titulo="Objetivos con los que ayudas" opciones={Object.entries(OBJETIVOS).map(([k, v]) => [k, nomCat(t, "obj", k, v)])} valor={objetivos} cambiar={setObjetivos} />
       {msg && <p className={msg.ok ? "aviso-ok" : "aviso-error"} role={msg.ok ? "status" : "alert"}>{msg.texto}</p>}
       <div className="flex flex-wrap gap-2">
         <button className="btn btn-lava" disabled={cargando}>{cargando ? "Guardando…" : "Guardar ficha"}</button>

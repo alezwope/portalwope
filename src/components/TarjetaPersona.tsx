@@ -1,5 +1,6 @@
 "use client";
 
+import { nomCat } from "@/lib/i18n/diccionarios";
 import { useTextos } from "@/components/Idioma";
 import type { Tarjeta } from "@/lib/entrenador";
 import { OBJETIVOS, nivelDe, type Objetivo } from "@/lib/catalogos";
@@ -27,7 +28,7 @@ export default function TarjetaPersona({ t, completa = false, atiende = [] }: { 
         ) : (
           <span className="rounded-full border border-borde px-2 text-xs text-suave">{tx["tarj.sinNivel"]}</span>
         )}
-        {t.objetivo && <span className="text-sm text-suave">· {OBJETIVOS[t.objetivo as Objetivo]}</span>}
+        {t.objetivo && <span className="text-sm text-suave">· {nomCat(tx, "obj", t.objetivo, OBJETIVOS[t.objetivo as Objetivo])}</span>}
         {(t.ciudad || t.pais) && <span className="text-sm text-suave">· {[t.ciudad, t.pais].filter(Boolean).join(", ")}</span>}
       </div>
       {fueraDeNivel && <p className="text-xs text-dorado">{tx["tarj.fuera"]}</p>}

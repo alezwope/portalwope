@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requerirEntrenador } from "@/lib/entrenador";
 import { ESTADOS_PAGINA } from "@/lib/catalogos";
+import { textos } from "@/lib/i18n/servidor";
+import { nomCat } from "@/lib/i18n/diccionarios";
 
 // Esta sección se puede instalar como su propia app: "UniBars Entrenador".
 export const metadata: Metadata = {
@@ -28,7 +30,7 @@ export default async function EntrenadorLayout({ children }: LayoutProps<"/panel
             {cupo !== null && <span className="text-suave"> / {cupo} gratis</span>}
           </span>
           {pagina.estado !== "activa" && (
-            <span className="rounded-full border border-dorado px-2 text-dorado">{ESTADOS_PAGINA[pagina.estado]}</span>
+            <span className="rounded-full border border-dorado px-2 text-dorado">{nomCat((await textos()).t, "estp", pagina.estado, ESTADOS_PAGINA[pagina.estado])}</span>
           )}
           <Link href={`/e/${pagina.slug}`} className="btn btn-borde !py-1">Ver mi ficha pública</Link>
         </div>
