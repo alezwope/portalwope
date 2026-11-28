@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Captcha, { CLAVE_CAPTCHA } from "@/components/Captcha";
 import { claveFiltrada } from "@/lib/claveFiltrada";
 import { crearCliente } from "@/lib/supabase/client";
 import { useTextos } from "@/components/Idioma";
@@ -31,7 +32,7 @@ const ROLES = [
 export default function FormularioAcceso({
   siguiente, errorInicial, modoInicial = "entrar",
 }: { siguiente: string; errorInicial?: string; modoInicial?: "entrar" | "crear" }) {
-  const { t } = useTextos();
+  const { t, idioma } = useTextos();
   const [modo, setModo] = useState<"entrar" | "crear">(modoInicial);
   const [rol, setRol] = useState(0);
   const [correo, setCorreo] = useState("");
@@ -39,6 +40,7 @@ export default function FormularioAcceso({
   const [error, setError] = useState(errorInicial ?? "");
   const [aviso, setAviso] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
 
   const destino = () =>
     `${window.location.origin}/auth/callback?siguiente=${encodeURIComponent(siguiente)}`;
@@ -48,10 +50,11 @@ export default function FormularioAcceso({
     setError("");
     setAviso("");
     if (clave.length < 8) return setError(t["acceso.errClave"]);
+    if (CLAVE_CAPTCHA && !captcha) return setError(t["acceso.errCaptcha"]);
     setCargando(true);
     const supabase = crearCliente();
     if (modo === "entrar") {
-      const { error } = await supabase.auth.signInWithPassword({ email: correo.trim(), password: clave });
+      const { error } = await supabase.auth.signInWithPassword({ email: correo.trim(), password: clave, options: { captchaToken: captcha ?? undefined } });
       if (error) setError(traducir(error.message, t));
       else window.location.assign(siguiente);
     } else {
@@ -63,12 +66,14 @@ export default function FormularioAcceso({
       const { data, error } = await supabase.auth.signUp({
         email: correo.trim(),
         password: clave,
-        options: { emailRedirectTo: destino() },
+        options: { emailRedirectTo: destino(), captchaToken: captcha ?? undefined },
       });
       if (error) setError(traducir(error.message, t));
       else if (data.session) window.location.assign(siguiente);
       else setAviso(t["acceso.okCorreo"]);
     }
+    setCaptcha(null);
+    try { window.turnstile?.reset(); } catch {}
     setCargando(false);
   }
 
@@ -155,6 +160,7 @@ export default function FormularioAcceso({
         )}
         {error && <p className="aviso-error" role="alert">{error}</p>}
         {aviso && <p className="aviso-ok" role="status">{aviso}</p>}
+        <Captcha alCambiar={setCaptcha} idioma={idioma} />
         <button className="btn btn-lava" disabled={cargando}>
           {cargando ? t["acceso.esperar"] : modo === "entrar" ? t["comun.entrar"] : t["comun.crearCuenta"]}
         </button>
