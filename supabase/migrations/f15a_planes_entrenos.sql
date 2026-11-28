@@ -1,0 +1,5 @@
+-- Fase 1.5a (aplicada en Supabase): catálogo `ejercicios` (448, importado desde Lista_Ejercicios_Maestra),
+-- planes, plan_entrenos, entreno_items, grupos, grupo_miembros, asignaciones, entreno_hechos, entreno_agenda, revisiones
+-- y RPC: plan_guardar, plan_borrar, grupo_guardar, grupo_borrar, asignar_plan, asignacion_cerrar, mis_entrenos,
+-- completar_entreno, programar_entreno, alumno_resumen, revision_proponer, revision_responder.
+-- Ajustes nuevos: plan_max_por_pagina 50, plan_max_entrenos 30, plan_max_ejercicios 40.

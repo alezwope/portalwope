@@ -5,6 +5,7 @@ import { requerirPerfil } from "@/lib/sesion";
 import { NIVELES } from "@/lib/catalogos";
 import type { ClaveTexto } from "@/lib/i18n/diccionarios";
 import Constancia from "@/components/Constancia";
+import MisEntrenos from "@/components/MisEntrenos";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await textos()).t["entrenar.titulo"] };
@@ -35,6 +36,8 @@ export default async function Entrenar() {
           </li>
         ))}
       </ol>
+
+      <MisEntrenos />
 
       <Constancia />
 
