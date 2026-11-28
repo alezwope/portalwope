@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTextos } from "@/components/Idioma";
 import { crearCliente } from "@/lib/supabase/client";
 
 /** Lado de la persona: decide qué datos comparte y puede terminar el vínculo. */
 export default function ControlVinculo({ id, estado, medidas, salud }: { id: string; estado: string; medidas: boolean; salud: boolean }) {
   const router = useRouter();
+  const { t } = useTextos();
   const [m, setM] = useState(medidas);
   const [s, setS] = useState(salud);
   const [error, setError] = useState("");
@@ -18,14 +20,14 @@ export default function ControlVinculo({ id, estado, medidas, salud }: { id: str
     setS(ns);
     const { error } = await crearCliente().rpc("permisos_vinculo", { p_id: id, p_medidas: nm, p_salud: ns });
     if (error) {
-      setError("No pudimos guardar. Intenta de nuevo.");
+      setError(t["vinc.errGuardar"]);
       setM(medidas);
       setS(salud);
     }
   }
 
   async function terminar() {
-    const texto = estado === "solicitud" ? "¿Cancelar la solicitud?" : "¿Terminar el vínculo? Tu entrenador dejará de ver tus datos.";
+    const texto = estado === "solicitud" ? t["vinc.confCancelar"] : t["vinc.confTerminar"];
     if (!window.confirm(texto)) return;
     setCargando(true);
     const { error } = await crearCliente().rpc("terminar_vinculo", { p_id: id });
@@ -36,18 +38,18 @@ export default function ControlVinculo({ id, estado, medidas, salud }: { id: str
 
   return (
     <div className="grid gap-2 text-sm">
-      <p className="text-suave">Siempre ve tu nivel, objetivo y marcas. Además compartes:</p>
+      <p className="text-suave">{t["vinc.siempre"]}</p>
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={m} onChange={(e) => guardar(e.target.checked, s)} className="accent-[var(--lava)]" />
-        Peso y estatura
+        {t["vinc.medidas"]}
       </label>
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={s} onChange={(e) => guardar(m, e.target.checked)} className="accent-[var(--lava)]" />
-        Lesiones y notas de salud
+        {t["vinc.salud"]}
       </label>
       {error && <p className="aviso-error" role="alert">{error}</p>}
       <button type="button" onClick={terminar} disabled={cargando} className="btn btn-borde justify-self-start !py-1.5">
-        {estado === "solicitud" ? "Cancelar solicitud" : "Terminar vínculo"}
+        {estado === "solicitud" ? t["vinc.cancelar"] : t["vinc.terminar"]}
       </button>
     </div>
   );

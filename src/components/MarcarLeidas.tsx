@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTextos } from "@/components/Idioma";
 import { crearCliente } from "@/lib/supabase/client";
 
 export default function MarcarLeidas() {
+  const { t } = useTextos();
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
 
@@ -17,7 +19,7 @@ export default function MarcarLeidas() {
 
   return (
     <button type="button" onClick={marcar} disabled={cargando} className="btn btn-borde">
-      Marcar todo como leído
+      {t["avisos.marcar"]}
     </button>
   );
 }
