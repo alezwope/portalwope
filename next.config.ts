@@ -13,6 +13,8 @@ const seguridad = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Hostinger limita los hilos del servidor de compilación: sin esto el build puede abortar.
+  experimental: { cpus: 2 },
   async headers() {
     return [{ source: "/:path*", headers: seguridad }];
   },
