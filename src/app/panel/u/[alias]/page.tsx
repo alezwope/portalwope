@@ -8,6 +8,8 @@ import { OBJETIVOS, nivelDe, type Objetivo } from "@/lib/catalogos";
 import { hace, type PerfilPublico } from "@/lib/social";
 import Avatar from "@/components/Avatar";
 import AccionesPerfil from "@/components/AccionesPerfil";
+import InsigniaVerif from "@/components/InsigniaVerif";
+import { formatoValor, type ResumenVerif } from "@/lib/habilidades";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await textos()).t["perfil.titulo"] };
@@ -21,6 +23,9 @@ export default async function PerfilDe({ params }: PageProps<"/panel/u/[alias]">
   if (!p) notFound();
   const nv = nivelDe(p.nivel);
   const { t, idioma } = await textos();
+  const { data: recs } = await supabase.rpc("records_de", { p_alias: p.alias });
+  const records = (recs ?? []) as { id: string; ejercicio: string; habilidad: string | null; valor: number; unidad: string; fecha: string; metodo: string; video_url: string | null; verif: ResumenVerif }[];
+  const T = t as Record<string, string>;
 
   return (
     <div className="mx-auto grid max-w-2xl gap-5">
@@ -70,7 +75,27 @@ export default async function PerfilDe({ params }: PageProps<"/panel/u/[alias]">
 
       <section className="tarjeta grid gap-1">
         <h2 className="text-xl">🏆 {t["pub.records"]}</h2>
-        <p className="text-suave">{t["pub.recordsTexto"]}</p>
+        {records.length === 0 ? (
+          <p className="text-suave">{t["pub.sinRecords"]}</p>
+        ) : (
+          <ul className="grid gap-2">
+            {records.map((r) => (
+              <li key={r.id} className="grid gap-1 rounded-lg border border-borde p-2">
+                <p className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span><strong>{r.habilidad ? T[`hab.${r.habilidad}`] ?? r.ejercicio : r.ejercicio}</strong>{" "}
+                    <span className="titulo text-xl text-dorado">{formatoValor(r.valor, r.unidad)}</span>{" "}
+                    <span className="text-sm text-suave">{r.unidad === "seg" ? "s" : r.unidad === "kg" ? "kg" : "reps"}</span></span>
+                  <span className="text-xs text-suave">{hace(r.fecha + "T12:00:00", idioma)}</span>
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <InsigniaVerif v={r.verif} />
+                  {r.metodo === "camara" && <span className="rounded-full border border-borde px-2 py-0.5 text-xs">📷 {t["dia.camaraOk"]}</span>}
+                  {r.video_url && <a href={r.video_url} target="_blank" rel="noopener noreferrer nofollow" className="text-sm text-lava underline">{t["dia.verVideo"]}</a>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

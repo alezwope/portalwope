@@ -5,6 +5,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { calcular, sanear } from "@/lib/nivelador";
 import { textos } from "@/lib/i18n/servidor";
 import { rellenar } from "@/lib/i18n/diccionarios";
+import { sugerenciaNivelador, type Habilidad, type MarcaDiario } from "@/lib/habilidades";
 
 const DIAS_ENTRE_PRUEBAS = 28;
 
@@ -30,7 +31,17 @@ export async function guardarNivelacion(entradasCrudas: unknown): Promise<{ ok: 
     .maybeSingle();
   if (ultima) {
     const dias = (Date.now() - new Date(ultima.creado_en).getTime()) / 86_400_000;
-    if (dias < DIAS_ENTRE_PRUEBAS) return { ok: false, error: rellenar(t["niv.err.espera"], { dias: Math.ceil(DIAS_ENTRE_PRUEBAS - dias) }) };
+    // Si el diario muestra una marca de un nivel superior al actual, se levanta la espera (el nivelador sigue decidiendo el nivel).
+    let sugerido = false;
+    if (dias < DIAS_ENTRE_PRUEBAS) {
+      const [{ data: habs }, { data: marcas }, { data: pf }] = await Promise.all([
+        supabase.from("habilidades").select("clave, patron, unidad, ventana, orden, campo_camara, hitos"),
+        supabase.from("marcas").select("habilidad, valor, creado_en").eq("usuario_id", uid).not("habilidad", "is", null).gt("creado_en", ultima.creado_en),
+        supabase.from("profiles").select("nivel").eq("id", uid).single(),
+      ]);
+      sugerido = !!sugerenciaNivelador((habs ?? []) as Habilidad[], (marcas ?? []) as unknown as MarcaDiario[], pf?.nivel);
+    }
+    if (dias < DIAS_ENTRE_PRUEBAS && !sugerido) return { ok: false, error: rellenar(t["niv.err.espera"], { dias: Math.ceil(DIAS_ENTRE_PRUEBAS - dias) }) };
   }
 
   const r = calculo.r;

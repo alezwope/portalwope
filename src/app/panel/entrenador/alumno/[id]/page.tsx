@@ -21,6 +21,7 @@ export default async function Alumno(props: PageProps<"/panel/entrenador/alumno/
       <section className="tarjeta">
         <TarjetaPersona t={t} completa atiende={pagina.atiende_niveles} />
       </section>
+      <Link href="/panel/progreso/verificar" className="btn btn-borde justify-self-start">✓ Verificar las marcas de mis alumnos</Link>
       <p className="text-sm text-suave">Muy pronto: enviar entrenamientos, avisos y seguir su progreso desde aquí.</p>
       {v.estado === "aceptado" && <TerminarVinculo id={id} />}
     </div>

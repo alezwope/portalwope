@@ -1,34 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTextos } from "@/components/Idioma";
 import { crearCliente } from "@/lib/supabase/client";
 
-type Marca = { id: string; ejercicio: string; valor: number; unidad: string; fecha: string };
-const SUGERENCIAS = ["Dominadas", "Flexiones", "Fondos en paralelas", "Sentadillas", "Plancha", "L-sit", "Muscle up", "Pino"];
 
 export default function FormularioEntrenamiento({
   usuarioId,
   medidas,
   salud,
-  marcas,
 }: {
   usuarioId: string;
   medidas: { peso_kg: number | null; estatura_cm: number | null } | null;
   salud: { lesiones: string | null; notas: string | null } | null;
-  marcas: Marca[];
 }) {
-  const router = useRouter();
-  const { t, idioma } = useTextos();
-  const UNIDADES: Record<string, string> = { reps: t["ent2.reps"], seg: t["ent2.seg"], kg: t["ent2.kg"] };
+  const { t } = useTextos();
   const [peso, setPeso] = useState(medidas?.peso_kg?.toString() ?? "");
   const [estatura, setEstatura] = useState(medidas?.estatura_cm?.toString() ?? "");
   const [lesiones, setLesiones] = useState(salud?.lesiones ?? "");
   const [notas, setNotas] = useState(salud?.notas ?? "");
-  const [ejercicio, setEjercicio] = useState("");
-  const [valor, setValor] = useState("");
-  const [unidad, setUnidad] = useState("reps");
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
   const [cargando, setCargando] = useState(false);
 
@@ -50,55 +41,13 @@ export default function FormularioEntrenamiento({
     setMsg(r1.error || r2.error ? { ok: false, texto: t["ent2.errDatos"] } : { ok: true, texto: t["ent2.okDatos"] });
   }
 
-  async function agregarMarca(ev: React.FormEvent) {
-    ev.preventDefault();
-    setMsg(null);
-    const v = parseFloat(valor);
-    if (ejercicio.trim().length < 2 || !(v > 0)) return setMsg({ ok: false, texto: t["ent2.errMarcaVal"] });
-    setCargando(true);
-    const { error } = await crearCliente().from("marcas").insert({ usuario_id: usuarioId, ejercicio: ejercicio.trim(), valor: v, unidad });
-    setCargando(false);
-    if (error) setMsg({ ok: false, texto: t["ent2.errMarca"] });
-    else {
-      setEjercicio("");
-      setValor("");
-      router.refresh();
-    }
-  }
-
-  async function borrar(id: string) {
-    await crearCliente().from("marcas").delete().eq("id", id);
-    router.refresh();
-  }
-
   return (
     <div className="grid gap-4">
-      <form onSubmit={agregarMarca} className="tarjeta grid gap-3">
+      <section className="tarjeta grid gap-2">
         <h3 className="text-lg">{t["ent2.marcas"]}</h3>
         <p className="text-sm text-suave">{t["ent2.marcasTexto"]}</p>
-        <div className="grid gap-2 sm:grid-cols-[1fr_6rem_9rem_auto]">
-          <input className="campo" list="sugerencias" value={ejercicio} onChange={(ev) => setEjercicio(ev.target.value)} placeholder={t["ent2.ejercicio"]} aria-label={t["ent2.ejercicio"]} maxLength={60} />
-          <datalist id="sugerencias">{SUGERENCIAS.map((s) => <option key={s} value={s} />)}</datalist>
-          <input className="campo" type="number" step="0.5" min="0" value={valor} onChange={(ev) => setValor(ev.target.value)} placeholder="0" aria-label={t["ent2.valor"]} />
-          <select className="campo" value={unidad} onChange={(ev) => setUnidad(ev.target.value)} aria-label={t["ent2.unidad"]}>
-            {Object.entries(UNIDADES).map(([k, u]) => <option key={k} value={k}>{u}</option>)}
-          </select>
-          <button className="btn btn-lava" disabled={cargando}>{t["ent2.agregar"]}</button>
-        </div>
-        {marcas.length > 0 && (
-          <ul className="grid gap-1 text-sm">
-            {marcas.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-2 border-t border-borde pt-1">
-                <span>
-                  <strong>{m.ejercicio}</strong>: {m.valor} {UNIDADES[m.unidad]}{" "}
-                  <span className="text-suave">· {new Date(m.fecha + "T12:00:00").toLocaleDateString(idioma)}</span>
-                </span>
-                <button type="button" onClick={() => borrar(m.id)} className="text-suave hover:text-lava" aria-label={`${t["ent2.borrar"]} ${m.ejercicio}`}>✕</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </form>
+        <Link href="/panel/progreso#diario" className="btn btn-lava justify-self-start">{t["entrenar.marcas"]}</Link>
+      </section>
 
       <form onSubmit={guardarDatos} className="tarjeta grid gap-3">
         <h3 className="text-lg">{t["ent2.medidas"]}</h3>

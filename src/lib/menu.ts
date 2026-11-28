@@ -33,7 +33,8 @@ export const MENU: SeccionMenu[] = [
     items: [
       { clave: "entrenar", texto: "menu.entrenar.mio", href: "/panel/entrenar" },
       { clave: "nivelador", texto: "menu.entrenar.nivelador", href: "/nivelador" },
-      { clave: "diario", texto: "menu.entrenar.diario", ...pronto("diario", "1.3") },
+      { clave: "diario", texto: "menu.entrenar.diario", href: "/panel/progreso" },
+      { clave: "verificar", texto: "menu.entrenar.verificar", href: "/panel/progreso/verificar" },
       { clave: "snack", texto: "menu.entrenar.snack", ...pronto("snack", "1.3") },
       { clave: "programas", texto: "menu.entrenar.programas", ...pronto("programas", "1.5") },
     ],

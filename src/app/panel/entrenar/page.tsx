@@ -51,7 +51,7 @@ export default async function Entrenar() {
         ))}
       </div>
 
-      <Link href="/panel/perfil#entrenamiento" className="btn btn-lava justify-self-start">{t["entrenar.marcas"]}</Link>
+      <Link href="/panel/progreso#diario" className="btn btn-lava justify-self-start">{t["entrenar.marcas"]}</Link>
     </div>
   );
 }

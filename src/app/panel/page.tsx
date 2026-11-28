@@ -27,7 +27,7 @@ export default async function PanelInicio() {
 
   const pasos = [
     { hecho: !!nivel, texto: t["inicio.paso1"], detalle: t["inicio.paso1d"], href: "/panel/perfil" },
-    { hecho: !!marcas, texto: t["inicio.paso2"], detalle: t["inicio.paso2d"], href: "/panel/perfil#entrenamiento" },
+    { hecho: !!marcas, texto: t["inicio.paso2"], detalle: t["inicio.paso2d"], href: "/panel/progreso#diario" },
     { hecho: !!vinculos, texto: t["inicio.paso3"], detalle: t["inicio.paso3d"], href: "/panel/comunidad" },
   ];
   const pendientes = pasos.filter((p) => !p.hecho);

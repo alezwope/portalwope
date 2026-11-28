@@ -17,6 +17,8 @@ export type Perfil = {
   onboarding_completo: boolean;
   modo_invisible: boolean;
   compartir_logros: "amigos" | "nadie";
+  zona_horaria?: string;
+  dias_semana?: number | null;
 };
 
 export type Pagina = {
