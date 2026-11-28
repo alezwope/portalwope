@@ -1,14 +1,13 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { requerirPerfil } from "@/lib/sesion";
+import { datosInicio, requerirPerfil } from "@/lib/sesion";
 
 export type Equipo = { esSuper: boolean; rol: string | null; permisos: string[] };
 
 /** Rol y permisos del equipo de la persona actual (la base de datos es quien decide; esto solo ordena la pantalla). */
 export const equipoActual = cache(async (): Promise<Equipo> => {
-  const { supabase } = await requerirPerfil();
-  const { data } = await supabase.rpc("mis_permisos");
-  const d = (data ?? {}) as { super_admin?: boolean; rol?: string | null; permisos?: string[] };
+  await requerirPerfil();
+  const d = (await datosInicio()).inicio.permisos ?? {};
   return { esSuper: !!d.super_admin, rol: d.rol ?? null, permisos: d.permisos ?? [] };
 });
 

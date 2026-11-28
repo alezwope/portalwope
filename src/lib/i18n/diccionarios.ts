@@ -1069,6 +1069,7 @@ const es = {
   "sim.err.ya_respondiste": "Ya respondiste esta pregunta.",
   "sim.err.video": "El video debe ser un enlace de YouTube (https://youtu.be/… o https://www.youtube.com/…).",
   "sim.rep": "Simposio: ayudó a {a} personas · {r} respuestas",
+  "acceso.errFiltrada": "Esa contraseña apareció en filtraciones de otros sitios. Elige otra distinta.",
 };
 
 export type ClaveTexto = keyof typeof es;
@@ -2118,6 +2119,7 @@ const en: Diccionario = {
   "sim.err.ya_respondiste": "You already answered this question.",
   "sim.err.video": "The video must be a YouTube link (https://youtu.be/… or https://www.youtube.com/…).",
   "sim.rep": "Symposium: helped {a} people · {r} answers",
+  "acceso.errFiltrada": "That password has appeared in data breaches on other sites. Choose a different one.",
 };
 
 const pt: Diccionario = {
@@ -3164,6 +3166,7 @@ const pt: Diccionario = {
   "sim.err.ya_respondiste": "Você já respondeu esta pergunta.",
   "sim.err.video": "O vídeo deve ser um link do YouTube (https://youtu.be/… ou https://www.youtube.com/…).",
   "sim.rep": "Simpósio: ajudou {a} pessoas · {r} respostas",
+  "acceso.errFiltrada": "Essa senha apareceu em vazamentos de outros sites. Escolha outra diferente.",
 };
 
 export const IDIOMAS = ["es", "en", "pt"] as const;

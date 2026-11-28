@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { claveFiltrada } from "@/lib/claveFiltrada";
 import { crearCliente } from "@/lib/supabase/client";
 import { useTextos } from "@/components/Idioma";
 import type { Textos } from "@/lib/i18n/diccionarios";
@@ -54,6 +55,7 @@ export default function FormularioAcceso({
       if (error) setError(traducir(error.message, t));
       else window.location.assign(siguiente);
     } else {
+      if (await claveFiltrada(clave)) { setCargando(false); return setError(t["acceso.errFiltrada"]); }
       try {
         if (ROLES[rol].v) localStorage.setItem(CLAVE_INTENCION, ROLES[rol].v);
         else localStorage.removeItem(CLAVE_INTENCION);

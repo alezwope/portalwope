@@ -40,25 +40,37 @@ export type Pagina = {
   lugar?: string | null;
 };
 
-export const requerirPerfil = cache(async () => {
+export type Inicio = {
+  perfil: Perfil;
+  paginas: Pagina[];
+  permisos: { super_admin?: boolean; rol?: string | null; permisos?: string[] };
+  notificaciones: number;
+  mensajes: number;
+  tipos_comentario: { clave: string; datos: unknown }[];
+};
+
+/** Todo lo que el panel necesita en un solo viaje a la base (perfil, páginas, permisos, contadores). */
+export const datosInicio = cache(async () => {
   const supabase = await crearClienteServidor();
   const { data: claims } = await supabase.auth.getClaims();
   const uid = claims?.claims?.sub;
   if (!uid) redirect("/entrar");
-  const user = { id: uid };
+  const { data } = await supabase.rpc("panel_inicio");
+  const inicio = data as Inicio | null;
+  if (!inicio?.perfil) redirect("/entrar");
+  return { supabase, user: { id: uid }, inicio };
+});
 
-  const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-  if (!data) redirect("/entrar");
-  if (!data.onboarding_completo) redirect("/onboarding");
-
-  return { supabase, user, perfil: data as Perfil };
+export const requerirPerfil = cache(async () => {
+  const { supabase, user, inicio } = await datosInicio();
+  if (!inicio.perfil.onboarding_completo) redirect("/onboarding");
+  return { supabase, user, perfil: inicio.perfil };
 });
 
 /** Páginas adicionales (entrenador, tienda, wellness) del usuario actual. */
 export const misPaginas = cache(async () => {
-  const { supabase } = await requerirPerfil();
-  const { data } = await supabase.rpc("mis_paginas");
-  return (data ?? []) as Pagina[];
+  await requerirPerfil();
+  return (await datosInicio()).inicio.paginas;
 });
 
 /** Solo permite rutas internas para evitar redirecciones a sitios ajenos. */

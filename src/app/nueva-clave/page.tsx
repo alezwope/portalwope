@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Cabecera from "@/components/Cabecera";
+import { claveFiltrada } from "@/lib/claveFiltrada";
 import { crearCliente } from "@/lib/supabase/client";
 
 export default function NuevaClave() {
@@ -14,6 +15,7 @@ export default function NuevaClave() {
     setError("");
     if (clave.length < 8) return setError("La contraseña debe tener al menos 8 caracteres.");
     setCargando(true);
+    if (await claveFiltrada(clave)) { setCargando(false); return setError("Esa contraseña apareció en filtraciones de otros sitios. Elige otra distinta."); }
     const { error } = await crearCliente().auth.updateUser({ password: clave });
     if (error) {
       setError("No pudimos cambiar la contraseña. Pide un enlace nuevo e inténtalo otra vez.");

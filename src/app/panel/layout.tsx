@@ -12,20 +12,15 @@ import SelectorModo from "@/components/SelectorModo";
 import { textos } from "@/lib/i18n/servidor";
 import { esIdioma } from "@/lib/i18n/diccionarios";
 import { equipoActual } from "@/lib/permisos";
-import { misPaginas, requerirPerfil } from "@/lib/sesion";
+import { datosInicio, misPaginas, requerirPerfil } from "@/lib/sesion";
 
 /** Esqueleto de la app (plantilla definitiva): persianas a la izquierda en computadora; cajón, barra inferior y bíceps en teléfono. */
 export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
-  const { supabase, perfil } = await requerirPerfil();
-  const [paginas, { t }, equipo, { count }, { data: tiposCat }, { data: sinLeerDato }] = await Promise.all([
-    misPaginas(),
-    textos(),
-    equipoActual(),
-    supabase.from("notificaciones").select("id", { count: "exact", head: true }).eq("leida", false),
-    supabase.from("catalogo_items").select("clave, datos").eq("catalogo", "tipos_comentario").eq("activo", true).order("orden"),
-    supabase.rpc("mensajes_sin_leer"),
-  ]);
-  const sinLeer = Number(sinLeerDato ?? 0);
+  const { perfil } = await requerirPerfil();
+  const [paginas, { t }, equipo, { inicio }] = await Promise.all([misPaginas(), textos(), equipoActual(), datosInicio()]);
+  const count = Number(inicio.notificaciones ?? 0);
+  const tiposCat = inicio.tipos_comentario as { clave: string; datos: unknown }[];
+  const sinLeer = Number(inicio.mensajes ?? 0);
   const entrenador = paginas.find((p) => p.tipo === "entrenador");
   const alias = perfil.alias ?? "yo";
   const esEquipo = equipo.esSuper || equipo.permisos.length > 0;
