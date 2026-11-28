@@ -8,6 +8,7 @@ export type ItemFeed = {
   creado_en: string;
   es_mio: boolean;
   autor: Persona;
+  crew?: { id: string; nombre: string } | null;
   reacciones: number;
   yo_reaccione: boolean;
 };

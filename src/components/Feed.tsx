@@ -8,9 +8,9 @@ import { MOTIVOS_REPORTE, hace, mensajeError, type ItemFeed } from "@/lib/social
 import { useTextos } from "@/components/Idioma";
 import type { ClaveTexto } from "@/lib/i18n/diccionarios";
 import Avatar from "@/components/Avatar";
-import Zona from "@/components/Zona";
+import Juntadas from "@/components/Juntadas";
 
-type Pestana = "amigos" | "zona" | "mios";
+type Pestana = "amigos" | "crews" | "zona" | "mios";
 
 function hostDe(url: string, otro: string) {
   try {
@@ -25,10 +25,11 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
   const { t, idioma } = useTextos();
   const PESTANAS: { id: Pestana; texto: string }[] = [
     { id: "amigos", texto: t["feed.amigos"] },
+    { id: "crews", texto: t["feed.crews"] },
     { id: "zona", texto: t["feed.zona"] },
     { id: "mios", texto: t["feed.mios"] },
   ];
-  const VACIO: Record<Pestana, string> = { amigos: t["feed.vacioAmigos"], zona: "", mios: t["feed.vacioMios"] };
+  const VACIO: Record<Pestana, string> = { amigos: t["feed.vacioAmigos"], crews: t["feed.vacioCrews"], zona: "", mios: t["feed.vacioMios"] };
   const [pestana, setPestana] = useState<Pestana>("amigos");
   const [items, setItems] = useState<ItemFeed[]>(inicial);
   const [cargando, setCargando] = useState(false);
@@ -86,7 +87,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
 
   return (
     <section className="grid gap-4" aria-label={t["feed.novedades"]}>
-      {pestana !== "zona" && (
+      {(pestana === "amigos" || pestana === "mios") && (
       <form onSubmit={publicar} className="tarjeta grid gap-2">
         <label className="grid gap-1 text-sm">
           <span className="sr-only">{t["feed.comparte"]}</span>
@@ -106,7 +107,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
       </form>
       )}
 
-      <div role="tablist" aria-label={t["feed.queVer"]} className="flex gap-2">
+      <div role="tablist" aria-label={t["feed.queVer"]} className="flex flex-wrap gap-2">
         {PESTANAS.map((p) => (
           <button
             key={p.id}
@@ -123,7 +124,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
       {msg && pestana !== "zona" && <p className={msg.ok ? "aviso-ok" : "aviso-error"} role="status">{msg.texto}</p>}
 
       {pestana === "zona" ? (
-        <Zona />
+        <Juntadas />
       ) : items.length === 0 && !cargando ? (
         <p className="tarjeta text-suave">{VACIO[pestana]}</p>
       ) : (
@@ -137,7 +138,7 @@ export default function Feed({ inicial }: { inicial: ItemFeed[] }) {
                   <div className="min-w-0 flex-1">
                     <Link href={`/panel/u/${it.autor.alias}`} className="font-bold hover:text-lava">@{it.autor.alias}</Link>
                     {nv && <span className="ml-2 text-xs" style={{ color: nv.color }}>{nv.nombre}</span>}
-                    <p className="text-xs text-suave">{hace(it.creado_en, idioma)}</p>
+                    <p className="text-xs text-suave">{hace(it.creado_en, idioma)}{it.crew && <> · <Link href={`/panel/crews/${it.crew.id}`} className="hover:text-lava">👥 {it.crew.nombre}</Link></>}</p>
                   </div>
                 </div>
                 {it.tipo === "logro" ? (

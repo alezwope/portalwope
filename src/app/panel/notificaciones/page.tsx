@@ -24,6 +24,7 @@ export default async function Notificaciones() {
   const traducir = (n: { tipo: string; titulo: string; cuerpo: string | null; datos: Record<string, unknown> | null }) => {
     const clave = `av.${n.tipo}`;
     const d = n.datos ?? {};
+    if (["crew_solicitud", "crew_aceptado"].includes(n.tipo) && T[clave]) return { titulo: rellenar(T[clave], { alias: String(d.alias ?? ""), crew: String(d.crew ?? "") }), cuerpo: null };
     if (!["marca_alumno", "marca_verificada", "marca_dudosa"].includes(n.tipo) || !T[clave] || !d.ejercicio) return { titulo: n.titulo, cuerpo: n.cuerpo };
     const ej = T[`hab.${String(d.ejercicio)}`] ?? String(d.ejercicio);
     const unidad = d.unidad === "seg" ? "s" : d.unidad === "kg" ? "kg" : "reps";
