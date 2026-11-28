@@ -36,7 +36,7 @@ export async function guardarNivelacion(entradasCrudas: unknown): Promise<{ ok: 
   const r = calculo.r;
   const { error } = await supabase.from("nivelaciones").insert({
     usuario_id: uid,
-    metodo: "declarado",
+    metodo: (entradas.camara ?? []).length > 0 ? "mixto" : "declarado",
     nivel: r.nivel,
     subnivel: r.subnivel,
     entradas,

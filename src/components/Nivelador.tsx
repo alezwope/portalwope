@@ -3,7 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { NIVELES, nivelDe } from "@/lib/catalogos";
-import { ENTRADAS_VACIAS, N_PARQ, calcular, completar, sinImpacto, type ClavePatron, type Entradas, type Aviso } from "@/lib/nivelador";
+import { CAMARA, ENTRADAS_VACIAS, N_PARQ, calcular, completar, sinImpacto, type ClavePatron, type Entradas, type Aviso } from "@/lib/nivelador";
+import CamaraPrueba from "@/components/CamaraPrueba";
 import { guardarNivelacion } from "@/app/nivelador/acciones";
 import { useTextos } from "@/components/Idioma";
 import { rellenar, type ClaveTexto, type Textos } from "@/lib/i18n/diccionarios";
@@ -11,10 +12,10 @@ import { rellenar, type ClaveTexto, type Textos } from "@/lib/i18n/diccionarios"
 const CLAVE = "unibars.nivelador.v2";
 const tx = (t: Textos, k: string) => (t as Record<string, string>)[k] ?? k;
 
-function Num({ valor, onChange, etiqueta, ayuda, unidad, max = 600 }: { valor: number | null; onChange: (v: number | null) => void; etiqueta: string; ayuda?: string; unidad?: string; max?: number }) {
+function Num({ valor, onChange, etiqueta, ayuda, unidad, max = 600, camara }: { valor: number | null; onChange: (v: number | null) => void; etiqueta: string; ayuda?: string; unidad?: string; max?: number; camara?: { texto: string; medido: boolean; textoMedido: string; abrir: () => void } }) {
   return (
-    <label className="grid gap-1 text-sm">
-      <span>{etiqueta}{unidad ? <span className="text-suave"> ({unidad})</span> : null}</span>
+    <label className="grid content-start gap-1 text-sm">
+      <span>{etiqueta}{unidad ? <span className="text-suave"> ({unidad})</span> : null}{camara?.medido ? <span className="text-dorado"> · 📷 {camara.textoMedido}</span> : null}</span>
       <input
         className="campo num"
         type="number"
@@ -25,6 +26,7 @@ function Num({ valor, onChange, etiqueta, ayuda, unidad, max = 600 }: { valor: n
         placeholder="0"
         onChange={(e) => onChange(e.target.value === "" ? null : Math.max(0, Math.min(max, Math.floor(Number(e.target.value)))))}
       />
+      {camara && <button type="button" onClick={(ev) => { ev.preventDefault(); camara.abrir(); }} className="justify-self-start text-xs text-lava underline">{camara.texto}</button>}
       {ayuda && <span className="text-xs text-suave">{ayuda}</span>}
     </label>
   );
@@ -62,6 +64,7 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
   const [calculado, setCalculado] = useState<ReturnType<typeof calcular> | null>(null);
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [pendiente, empezar] = useTransition();
+  const [cam, setCam] = useState<{ campo: string; titulo: string } | null>(null);
 
   useEffect(() => {
     try {
@@ -81,7 +84,24 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
     setCalculado(null);
     setMensaje(null);
   };
-  const sub = <K extends ClavePatron>(k: K, cambios: Partial<Entradas[K]>) => set(k, { ...e[k], ...cambios });
+  const sub = <K extends ClavePatron>(k: K, cambios: Partial<Entradas[K]>) => {
+    // Si se escribe a mano, ese campo deja de contar como medido con cámara.
+    const tocados = Object.keys(cambios).map((c) => `${k}.${c}`);
+    setE((p) => ({ ...p, [k]: { ...p[k], ...cambios }, camara: (p.camara ?? []).filter((c) => !tocados.includes(c)) }));
+    setCalculado(null);
+    setMensaje(null);
+  };
+  /** Botón de cámara para un campo medible. */
+  const camaraDe = (campo: string, titulo: string) => CAMARA[campo] ? {
+    texto: t["cam.medir"], textoMedido: t["cam.medido"], medido: (e.camara ?? []).includes(campo), abrir: () => setCam({ campo, titulo }),
+  } : undefined;
+  function usarCamara(valor: number) {
+    if (!cam) return;
+    const [k, c] = cam.campo.split(".") as [ClavePatron, string];
+    setE((p) => ({ ...p, [k]: { ...p[k], [c]: valor }, camara: [...new Set([...(p.camara ?? []), cam.campo])] }));
+    setCalculado(null);
+    setCam(null);
+  }
   const impacto = sinImpacto(e);
 
   function calcularAhora() {
@@ -164,9 +184,9 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
       {impacto && <p className="aviso-error">{t["niv.impactoAviso"]}</p>}
 
       <Patron titulo={t["niv.p.piernas"]} omitirTexto={t["niv.omitir"]} omitir={e.piernas.omitir} setOmitir={(v) => sub("piernas", { omitir: v })}>
-        <Num etiqueta={t["niv.sentadillas"]} unidad={reps} valor={e.piernas.reps} onChange={(v) => sub("piernas", { reps: v })} />
-        {!impacto && <Num etiqueta={t["niv.silla"]} unidad={seg} max={360} valor={e.piernas.silla} onChange={(v) => sub("piernas", { silla: v })} ayuda={t["niv.sillaAyuda"]} />}
-        <Num etiqueta={t["niv.pistol"]} unidad={reps} valor={e.piernas.pistolLibre} onChange={(v) => sub("piernas", { pistolLibre: v })} ayuda={t["niv.pistolAyuda"]} />
+        <Num etiqueta={t["niv.sentadillas"]} camara={camaraDe("piernas.reps", t["niv.sentadillas"])} unidad={reps} valor={e.piernas.reps} onChange={(v) => sub("piernas", { reps: v })} />
+        {!impacto && <Num etiqueta={t["niv.silla"]} camara={camaraDe("piernas.silla", t["niv.silla"])} unidad={seg} max={360} valor={e.piernas.silla} onChange={(v) => sub("piernas", { silla: v })} ayuda={t["niv.sillaAyuda"]} />}
+        <Num etiqueta={t["niv.pistol"]} camara={camaraDe("piernas.pistolLibre", t["niv.pistol"])} unidad={reps} valor={e.piernas.pistolLibre} onChange={(v) => sub("piernas", { pistolLibre: v })} ayuda={t["niv.pistolAyuda"]} />
         <div className="grid gap-2">
           <Si valor={e.piernas.completa} onChange={(v) => sub("piernas", { completa: v })} texto={t["niv.completa"]} />
           <Si valor={e.piernas.pistolAsistido} onChange={(v) => sub("piernas", { pistolAsistido: v })} texto={t["niv.pistolAsistido"]} />
@@ -174,11 +194,11 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
       </Patron>
 
       <Patron titulo={t["niv.p.empuje"]} omitirTexto={t["niv.omitir"]} omitir={e.empuje.omitir} setOmitir={(v) => sub("empuje", { omitir: v })}>
-        <Num etiqueta={t["niv.pared"]} unidad={reps} valor={e.empuje.pared} onChange={(v) => sub("empuje", { pared: v })} />
-        <Num etiqueta={t["niv.banco"]} unidad={reps} valor={e.empuje.banco} onChange={(v) => sub("empuje", { banco: v })} />
+        <Num etiqueta={t["niv.pared"]} camara={camaraDe("empuje.pared", t["niv.pared"])} unidad={reps} valor={e.empuje.pared} onChange={(v) => sub("empuje", { pared: v })} />
+        <Num etiqueta={t["niv.banco"]} camara={camaraDe("empuje.banco", t["niv.banco"])} unidad={reps} valor={e.empuje.banco} onChange={(v) => sub("empuje", { banco: v })} />
         <Num etiqueta={t["niv.rodillas"]} unidad={reps} valor={e.empuje.rodillas} onChange={(v) => sub("empuje", { rodillas: v })} />
-        <Num etiqueta={t["niv.piso"]} unidad={reps} valor={e.empuje.piso} onChange={(v) => sub("empuje", { piso: v })} />
-        <Num etiqueta={t["niv.fondos"]} unidad={reps} valor={e.empuje.fondos} onChange={(v) => sub("empuje", { fondos: v })} />
+        <Num etiqueta={t["niv.piso"]} camara={camaraDe("empuje.piso", t["niv.piso"])} unidad={reps} valor={e.empuje.piso} onChange={(v) => sub("empuje", { piso: v })} />
+        <Num etiqueta={t["niv.fondos"]} camara={camaraDe("empuje.fondos", t["niv.fondos"])} unidad={reps} valor={e.empuje.fondos} onChange={(v) => sub("empuje", { fondos: v })} />
         <div className="grid gap-2">
           <Si valor={e.empuje.pino} onChange={(v) => sub("empuje", { pino: v })} texto={t["niv.pino"]} />
           <Si valor={e.empuje.pseudo} onChange={(v) => sub("empuje", { pseudo: v })} texto={t["niv.pseudo"]} />
@@ -186,15 +206,15 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
       </Patron>
 
       <Patron titulo={t["niv.p.core"]} omitirTexto={t["niv.omitir"]} omitir={e.core.omitir} setOmitir={(v) => sub("core", { omitir: v })}>
-        <Num etiqueta={t["niv.plancha"]} unidad={seg} valor={e.core.plancha} onChange={(v) => sub("core", { plancha: v })} />
-        <Num etiqueta={t["niv.hollow"]} unidad={seg} valor={e.core.hollow} onChange={(v) => sub("core", { hollow: v })} />
+        <Num etiqueta={t["niv.plancha"]} camara={camaraDe("core.plancha", t["niv.plancha"])} unidad={seg} valor={e.core.plancha} onChange={(v) => sub("core", { plancha: v })} />
+        <Num etiqueta={t["niv.hollow"]} camara={camaraDe("core.hollow", t["niv.hollow"])} unidad={seg} valor={e.core.hollow} onChange={(v) => sub("core", { hollow: v })} />
         <Num etiqueta={t["niv.lsit"]} unidad={seg} valor={e.core.lsit} onChange={(v) => sub("core", { lsit: v })} />
       </Patron>
 
       <Patron titulo={t["niv.p.traccion"]} omitirTexto={t["niv.sinBarra"]} omitir={e.traccion.omitir} setOmitir={(v) => sub("traccion", { omitir: v })}>
-        <Num etiqueta={t["niv.colgado"]} unidad={seg} valor={e.traccion.colgado} onChange={(v) => sub("traccion", { colgado: v })} />
-        <Num etiqueta={t["niv.estatica"]} unidad={seg} valor={e.traccion.estatica} onChange={(v) => sub("traccion", { estatica: v })} />
-        <Num etiqueta={t["niv.dominadas"]} unidad={reps} valor={e.traccion.dominadas} onChange={(v) => sub("traccion", { dominadas: v })} />
+        <Num etiqueta={t["niv.colgado"]} camara={camaraDe("traccion.colgado", t["niv.colgado"])} unidad={seg} valor={e.traccion.colgado} onChange={(v) => sub("traccion", { colgado: v })} />
+        <Num etiqueta={t["niv.estatica"]} camara={camaraDe("traccion.estatica", t["niv.estatica"])} unidad={seg} valor={e.traccion.estatica} onChange={(v) => sub("traccion", { estatica: v })} />
+        <Num etiqueta={t["niv.dominadas"]} camara={camaraDe("traccion.dominadas", t["niv.dominadas"])} unidad={reps} valor={e.traccion.dominadas} onChange={(v) => sub("traccion", { dominadas: v })} />
         <div className="grid gap-2">
           <Si valor={e.traccion.muscleUp} onChange={(v) => sub("traccion", { muscleUp: v })} texto={t["niv.muscleUp"]} />
           <Si valor={e.traccion.frontLever} onChange={(v) => sub("traccion", { frontLever: v })} texto={t["niv.frontLever"]} />
@@ -203,12 +223,24 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
 
       {!impacto && (
         <Patron titulo={t["niv.p.resistencia"]} intro={t["niv.burpeesIntro"]} omitirTexto={t["niv.omitirRes"]} omitir={e.resistencia.omitir} setOmitir={(v) => sub("resistencia", { omitir: v })}>
-          <Num etiqueta={t["niv.medios"]} unidad={reps} max={120} valor={e.resistencia.medios} onChange={(v) => sub("resistencia", { medios: v })} />
-          <Num etiqueta={t["niv.conFlexion"]} unidad={reps} max={120} valor={e.resistencia.conFlexion} onChange={(v) => sub("resistencia", { conFlexion: v })} />
+          <Num etiqueta={t["niv.medios"]} camara={camaraDe("resistencia.medios", t["niv.medios"])} unidad={reps} max={120} valor={e.resistencia.medios} onChange={(v) => sub("resistencia", { medios: v })} />
+          <Num etiqueta={t["niv.conFlexion"]} camara={camaraDe("resistencia.conFlexion", t["niv.conFlexion"])} unidad={reps} max={120} valor={e.resistencia.conFlexion} onChange={(v) => sub("resistencia", { conFlexion: v })} />
           <div className="sm:col-span-2">
             <Si valor={e.resistencia.pechoSalto} onChange={(v) => sub("resistencia", { pechoSalto: v })} texto={t["niv.pechoSalto"]} />
           </div>
         </Patron>
+      )}
+
+      {cam && CAMARA[cam.campo] && (
+        <CamaraPrueba
+          ejercicio={CAMARA[cam.campo].ejercicio}
+          sostenido={CAMARA[cam.campo].sostenido}
+          duracion={CAMARA[cam.campo].duracion}
+          titulo={cam.titulo}
+          conSesion={conSesion}
+          onUsar={usarCamara}
+          onCerrar={() => setCam(null)}
+        />
       )}
 
       <div className="flex flex-wrap items-center gap-3">
@@ -246,6 +278,7 @@ export default function Nivelador({ conSesion }: { conSesion: boolean }) {
             <p className="text-sm text-suave">{tx(t, `niv.d.${r.destino}.d`)}</p>
           </div>
           {r.avisos.map((a, i) => <p key={i} className="aviso-ok">{textoAviso(t, a)}</p>)}
+          {(e.camara ?? []).length > 0 && <p className="text-sm text-dorado">📷 {rellenar(t["cam.resumen"], { n: (e.camara ?? []).length })}</p>}
           <p className="text-xs text-suave">{t["niv.declarado"]}</p>
 
           {conSesion ? (

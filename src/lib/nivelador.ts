@@ -3,6 +3,25 @@
 import type { Nivel } from "@/lib/catalogos";
 
 export const VERSION = 2;
+
+/** Pruebas que se pueden medir con la cámara: campo → ejercicio del motor. */
+export const CAMARA: Record<string, { ejercicio: string; sostenido?: boolean; duracion?: number }> = {
+  "piernas.reps": { ejercicio: "sentadilla", duracion: 60 },
+  "piernas.silla": { ejercicio: "silla", sostenido: true },
+  "piernas.pistolLibre": { ejercicio: "pistol" },
+  "empuje.pared": { ejercicio: "flexpared" },
+  "empuje.banco": { ejercicio: "flexbanco" },
+  "empuje.piso": { ejercicio: "flexion" },
+  "empuje.fondos": { ejercicio: "fondo" },
+  "core.plancha": { ejercicio: "plancha", sostenido: true },
+  "core.hollow": { ejercicio: "hollow", sostenido: true },
+  "traccion.colgado": { ejercicio: "colgado", sostenido: true },
+  "traccion.estatica": { ejercicio: "domest", sostenido: true },
+  "traccion.dominadas": { ejercicio: "dominada" },
+  "resistencia.medios": { ejercicio: "burpee", duracion: 60 },
+  "resistencia.conFlexion": { ejercicio: "burpee", duracion: 60 },
+};
+export const CAMPOS_CAMARA = Object.keys(CAMARA);
 export const CLAVES: Nivel[] = ["genesis", "fenix", "guerrero", "maestro", "titan"];
 export const NOMBRE_NIVEL: Record<Nivel, string> = { genesis: "Génesis", fenix: "Fénix", guerrero: "Guerrero", maestro: "Maestro", titan: "Titán" };
 export const N_PARQ = 7;
@@ -22,6 +41,8 @@ export type Entradas = {
   core: { omitir: boolean; plancha: number | null; hollow: number | null; lsit: number | null };
   traccion: { omitir: boolean; colgado: number | null; estatica: number | null; dominadas: number | null; muscleUp: boolean; frontLever: boolean };
   resistencia: { omitir: boolean; medios: number | null; conFlexion: number | null; pechoSalto: boolean };
+  /** Campos medidos con la cámara (p. ej. "piernas.silla"). */
+  camara?: string[];
 };
 
 export const ENTRADAS_VACIAS: Entradas = {
@@ -36,6 +57,7 @@ export const ENTRADAS_VACIAS: Entradas = {
   core: { omitir: false, plancha: null, hollow: null, lsit: null },
   traccion: { omitir: false, colgado: null, estatica: null, dominadas: null, muscleUp: false, frontLever: false },
   resistencia: { omitir: false, medios: null, conFlexion: null, pechoSalto: false },
+  camara: [],
 };
 
 /** Une lo guardado con la estructura actual (por si cambia la versión del formulario). */
@@ -46,6 +68,7 @@ export function completar(g: Partial<Entradas>): Entradas {
     parq: Array.isArray(g.parq) && g.parq.length === N_PARQ ? g.parq : v.parq,
     piernas: { ...v.piernas, ...g.piernas }, empuje: { ...v.empuje, ...g.empuje }, core: { ...v.core, ...g.core },
     traccion: { ...v.traccion, ...g.traccion }, resistencia: { ...v.resistencia, ...g.resistencia },
+    camara: Array.isArray(g.camara) ? g.camara : [],
   };
 }
 
@@ -216,5 +239,6 @@ export function sanear(x: unknown): Entradas | null {
     core: { omitir: bool(co.omitir), plancha: num(co.plancha), hollow: num(co.hollow), lsit: num(co.lsit) },
     traccion: { omitir: bool(tr.omitir), colgado: num(tr.colgado), estatica: num(tr.estatica), dominadas: num(tr.dominadas), muscleUp: bool(tr.muscleUp), frontLever: bool(tr.frontLever) },
     resistencia: { omitir: bool(re.omitir), medios: num(re.medios, 120), conFlexion: num(re.conFlexion, 120), pechoSalto: bool(re.pechoSalto) },
+    camara: Array.isArray(o.camara) ? o.camara.filter((c: unknown) => typeof c === "string" && CAMPOS_CAMARA.includes(c)).slice(0, 20) : [],
   };
 }
