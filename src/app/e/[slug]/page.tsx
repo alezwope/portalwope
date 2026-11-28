@@ -52,6 +52,8 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
   const sedes = (sedesRaw ?? []) as { id: string; nombre: string; horario: string | null; ciudad: string | null; lat: number; lng: number }[];
   const { data: itemsRaw } = user ? await supabase.rpc("mercado_listar", { p_seccion: null, p_pais: "", p_q: "", p_pagina: pagina.id, p_offset: 0 }) : { data: [] };
   const items = ((itemsRaw ?? []) as ItemMercado[]).filter((i) => i.estado === "activo");
+  const { data: repRaw } = user && pagina.tipo !== "tienda" ? await supabase.rpc("simposio_reputacion", { p_pagina: pagina.id }) : { data: null };
+  const rep = repRaw as { respuestas: number; ayudo: number; estrellas: number | null; valoraciones: number } | null;
   const recibe = pagina.tipo !== "tienda" && pagina.estado === "activa";
   const volver = `/e/${pagina.slug}`;
 
@@ -72,6 +74,10 @@ export default async function PaginaPublica(props: PageProps<"/e/[slug]">) {
         </header>
 
         {pagina.bio && <p className="tarjeta whitespace-pre-line">{pagina.bio}</p>}
+
+        {rep && rep.respuestas > 0 && (
+          <p className="text-sm text-dorado">🎓 Simposio: ayudó a {rep.ayudo} personas · {rep.respuestas} respuestas{rep.estrellas ? ` · ${rep.estrellas} ★ (${rep.valoraciones})` : ""}</p>
+        )}
 
         {sedes.length > 0 && (
           <section className="tarjeta grid gap-2">
